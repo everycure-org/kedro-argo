@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+spec:
+  templates:
+  - name: pipeline
+    dag:
+      tasks:
+      - name: compare-plot-c
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_c
+      - name: data-processing-fused
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: data_processing_fused
+      - name: compare-plot-a
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_a
+      - name: compare-plot-b
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_b
+      - name: data-science-fused
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: data_science_fused

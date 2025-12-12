@@ -1,0 +1,28 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = ["setuptools>=65.5.1", "setuptools-scm>=8.0"]  # PEP 518 specifications
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kedro-argo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "kedro",
+    "pyyaml>=6.0.2",
+    "jinja2>=3.0.0",
+]
+
+[project.entry-points."kedro.project_commands"]
+argo = "kedro_argo.framework.cli.cli:commands"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["kedro_argo*"]
+
+[tool.setuptools.package-data]
+kedro_argo = ["**/*.tmpl"]
