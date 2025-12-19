@@ -12,8 +12,7 @@
 - [ ] Hardware configuration
 - [x] Submitting to cluster
 - [x] Fusing pipelines
-- [ ] Allow memory datasets during fusing
-- [ ] allowing memory datasets
-- [ ] Allow registering custom templates
+- [x] Set memory datasets during fusing
+- [ ] Allow registering custom templates, e.g., neo4j
 - [ ] Allow environment variables
 - [ ] Provide image buiding guiderails
