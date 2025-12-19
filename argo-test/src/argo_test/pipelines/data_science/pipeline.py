@@ -1,5 +1,5 @@
 from kedro.pipeline import Node, Pipeline
-from kedro_argo.runners.fuse_runner import FusedPipeline
+from kedro_argo.pipeline import FusedPipeline
 
 from .nodes import evaluate_model, split_data, train_model
 
