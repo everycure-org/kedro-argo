@@ -5,6 +5,7 @@ from kedro.runner.sequential_runner import SequentialRunner
 from pluggy import PluginManager
 
 from kedro_argo.pipeline.fused_pipeline import FusedNode
+
 class FusedRunner(SequentialRunner):
     """Fused runner is an extension of the SequentialRunner that
     essentially unpacks the FusedNode back to the contained nodes for
