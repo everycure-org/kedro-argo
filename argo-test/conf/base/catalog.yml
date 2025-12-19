@@ -55,24 +55,24 @@ shuttles:
 
 preprocessed_companies:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/preprocessed_companies.parquet
+  filepath: ${globals:paths.root}/02_intermediate/preprocessed_companies.parquet
 
 preprocessed_shuttles:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/preprocessed_shuttles.parquet
+  filepath: ${globals:paths.root}/02_intermediate/preprocessed_shuttles.parquet
 
 model_input_table:
   type: pandas.ParquetDataset
-  filepath: data/03_primary/model_input_table.parquet
+  filepath: ${globals:paths.root}/03_primary/model_input_table.parquet
 
 regressor:
   type: pickle.PickleDataset
-  filepath: data/06_models/regressor.pickle
+  filepath: ${globals:paths.root}/06_models/regressor.pickle
   versioned: true
 
 shuttle_passenger_capacity_plot_exp:
   type: plotly.PlotlyDataset
-  filepath: data/08_reporting/shuttle_passenger_capacity_plot_exp.json
+  filepath: ${globals:paths.root}/08_reporting/shuttle_passenger_capacity_plot_exp.json
   versioned: true
   plotly_args:
     type: bar
@@ -87,10 +87,10 @@ shuttle_passenger_capacity_plot_exp:
 
 shuttle_passenger_capacity_plot_go:
   type: plotly.JSONDataset
-  filepath: data/08_reporting/shuttle_passenger_capacity_plot_go.json
+  filepath: ${globals:paths.root}/08_reporting/shuttle_passenger_capacity_plot_go.json
   versioned: true
 
 dummy_confusion_matrix:
   type: matplotlib.MatplotlibDataset
-  filepath: data/08_reporting/dummy_confusion_matrix.png
+  filepath: ${globals:paths.root}/08_reporting/dummy_confusion_matrix.png
   versioned: true

@@ -1,8 +1,37 @@
 {# <project_root>/templates/argo_spec.tmpl #}
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
+metadata:
+  generateName: workflow-
+  namespace: {{ namespace }}
 spec:
+  workflowMetadata:
+    labels:
+      plugin: kedro-argo 
+  entrypoint: "pipeline"
   templates:
+  - name: kedro
+    metadata:
+      labels:
+        app: kedro-argo
+    inputs:
+      parameters:
+      - name: pipeline
+      - name: kedro_nodes
+    container:
+      image: {{ image }}
+      command: ["kedro"]
+      imagePullPolicy: Always
+      args:
+      - "run"
+      - "--pipeline"
+      - "{{ '{{inputs.parameters.pipeline}}' }}"
+      - "--nodes"
+      - "{{ '{{inputs.parameters.kedro_nodes}}' }}"
+      - "--runner"
+      - "kedro_argo.runners.fuse_runner.FusedRunner"
+      - "--env"
+      - "{{ environment }}"
 
   - name: pipeline
     dag:

@@ -5,6 +5,8 @@ from logging import getLogger
 
 import click
 import yaml
+from kubernetes import config
+from kubernetes.dynamic import DynamicClient
 from jinja2 import Environment, FileSystemLoader
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
@@ -20,11 +22,15 @@ def commands():
 
 @commands.command(name="submit")
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--environment", "-e", type=str, default="base", help="Kedro environment to execute in")
+@click.option("--image", type=str, required=True, help="Image to execute")
+@click.option("--namespace", "-n", type=str, required=True, help="Namespace to execute in")
 @click.pass_obj
 def submit(
     ctx,
     pipeline: str,
+    image: str,
+    namespace: str,
     environment: str
 ):
     """Submit the pipeline to Argo."""
@@ -42,14 +48,30 @@ def submit(
     rendered_template = template.render(
         pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
         pipeline_name=pipeline,
+        image=image,
+        namespace=namespace,
+        environment=environment
     )
 
     # Load as yaml
     yaml_data = yaml.safe_load(rendered_template)
-    yaml_data = yaml.safe_load(rendered_template)
     yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
     save_argo_template(
         yaml_without_anchors,
+    )
+
+    # Use kubeconfig to submit to kubernetes
+    config.load_kube_config()
+    client = DynamicClient(config.new_client_from_config())
+
+    resource = client.resources.get(
+        api_version=yaml_data["apiVersion"],
+        kind=yaml_data["kind"],
+    )
+
+    resource.create(
+        body=yaml_data,
+        namespace=namespace
     )
 
 

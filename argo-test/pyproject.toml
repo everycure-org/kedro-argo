@@ -5,7 +5,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.12"
 name = "argo_test"
 readme = "README.md"
 dynamic = [
@@ -20,7 +20,9 @@ dependencies = [
     "kedro-viz>=6.7.0",
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
-    "kedro-argo @ file:///Users/laurens/Documents/projects/kedro-argo/kedro-argo"
+    "kubernetes",
+    "kedro-argo @ file:///Users/laurens/Documents/projects/kedro-argo/kedro-argo",
+    "gcsfs"
 ]
 
 [project.scripts]
