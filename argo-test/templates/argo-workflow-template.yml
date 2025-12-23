@@ -29,7 +29,7 @@ spec:
       - --nodes
       - '{{inputs.parameters.kedro_nodes}}'
       - --runner
-      - kedro_argo.runners.fuse_runner.FusedRunner
+      - kedro_argo.runners.FusedRunner
       - --env
       - cloud
   - name: pipeline

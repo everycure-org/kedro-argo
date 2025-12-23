@@ -1,5 +1,6 @@
 from typing import Iterable, List
 from kedro.pipeline import Pipeline, Node
+from functools import cached_property
 
 class FusedNode(Node):
     """FusedNode is an extension of Kedro's internal node. The FusedNode
@@ -28,6 +29,10 @@ class FusedNode(Node):
                 self._inputs.remove(node)
 
         self._tags = list(set(self._tags))
+
+    @cached_property
+    def inputs(self) -> list[str]:
+        return self._inputs # TODO: Remove transcoding?
 
 
 class FusedPipeline(Pipeline):

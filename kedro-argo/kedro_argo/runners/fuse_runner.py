@@ -1,4 +1,5 @@
 from kedro.io import DataCatalog
+from kedro.framework.project import pipelines
 from kedro.pipeline import Pipeline
 from kedro.io.memory_dataset import MemoryDataset
 from kedro.runner.sequential_runner import SequentialRunner
@@ -22,13 +23,29 @@ class FusedRunner(SequentialRunner):
         nodes = pipeline.nodes
 
         # Use memory datasets for intermediate nodes
-        # FUTURE: Expose flag?
+        # TODO: Expose flag?
         for node in nodes:
             if isinstance(node, FusedNode):
                 pipeline = Pipeline(node._nodes)
-                for dataset in pipeline.datasets().difference(pipeline.inputs().union(pipeline.outputs())):
+
+                outputs = []
+                for dataset in pipeline.datasets():
+
+                    found = False
+
+                    # TODO: Pass actual pipeline as part of CLI
+                    for pipeline_node in pipelines["__default__"].nodes:
+                        if node.name != pipeline_node.name:
+                            if dataset in pipeline_node.inputs:
+                                found = True
+                                break
+
+                    if found:
+                        print(f"{dataset} found as input to other pipeline node")
+                        outputs.append(dataset)
+
+                for dataset in pipeline.datasets().difference(pipeline.inputs().union(outputs)):
                     catalog._datasets[dataset] = MemoryDataset()
-            
 
         # Invoke super runner
         super()._run(
