@@ -145,19 +145,19 @@ def submit(
         yaml_without_anchors,
     )
 
-    # Use kubeconfig to submit to kubernetes
-    config.load_kube_config()
-    client = DynamicClient(config.new_client_from_config())
+    # # Use kubeconfig to submit to kubernetes
+    # config.load_kube_config()
+    # client = DynamicClient(config.new_client_from_config())
 
-    resource = client.resources.get(
-        api_version=yaml_data["apiVersion"],
-        kind=yaml_data["kind"],
-    )
+    # resource = client.resources.get(
+    #     api_version=yaml_data["apiVersion"],
+    #     kind=yaml_data["kind"],
+    # )
 
-    resource.create(
-        body=yaml_data,
-        namespace=namespace
-    )
+    # resource.create(
+    #     body=yaml_data,
+    #     namespace=namespace
+    # )
 
 
 def save_argo_template(argo_template: str) -> str:

@@ -21,7 +21,7 @@ dependencies = [
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
     "kubernetes",
-    "kedro-argo @ file:///app/kedro-argo",
+    "kedro-argo @ file:///Users/laurens/Documents/projects/kedro-argo/kedro-argo",
     "gcsfs"
 ]
 
