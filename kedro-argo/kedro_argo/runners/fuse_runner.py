@@ -39,9 +39,14 @@ class FusedRunner(SequentialRunner):
     ):
         """Instantiates the runner class.
 
+        The runner requires access to the pipeline name under execution to correctly handle
+        node fusing, as each node during parallell execution is wrapped as a single unit. To
+        properly fuse, the runner needs to know the pipeline execution boundary.
+
         Args:
             is_async: If True, the node inputs and outputs are loaded and saved
                 asynchronously with threads. Defaults to False.
+            pipeline_name: Name of the pipeline to run.
         """
         self._is_async = is_async
         self._pipeline_name = pipeline_name
