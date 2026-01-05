@@ -55,6 +55,8 @@ class FusedRunner(SequentialRunner):
     ) -> None:
         nodes = pipeline.nodes
 
+        LOGGER.warning(f"Running pipeline: {self._pipeline_name}")
+
         for node in nodes:
             if isinstance(node, FusedNode):
                 pipeline = Pipeline(node._nodes)
