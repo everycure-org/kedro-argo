@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterable
 from logging import getLogger
 
 import click
@@ -8,13 +8,95 @@ import yaml
 from kubernetes import config
 from kubernetes.dynamic import DynamicClient
 from jinja2 import Environment, FileSystemLoader
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
+from kedro.framework.session import KedroSession
+from kedro.framework.cli.project import (
+    ASYNC_ARG_HELP,
+    CONF_SOURCE_HELP,
+    FROM_INPUTS_HELP,
+    FROM_NODES_HELP,
+    LOAD_VERSION_HELP,
+    NODE_ARG_HELP,
+    PARAMS_ARG_HELP,
+    PIPELINE_ARG_HELP,
+    RUNNER_ARG_HELP,
+    TAG_ARG_HELP,
+    TO_NODES_HELP,
+    TO_OUTPUTS_HELP,
+    project_group,
+)
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 
+from kedro_argo.runners.fuse_runner import FusedRunner
+
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
+
+@click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
+def cli():
+    pass
+
+@cli.command(name="run")
+@click.option("--pipeline", "-p", type=str, default="__default__", help="Name of the pipeline to execute")
+@click.option("--env", "-e", type=str, default=None, help="Kedro environment to run the pipeline in")
+@click.option("--config", "-c", type=str, multiple=True, help="Extra config to pass to KedroContext")
+@click.option("--params", type=str, multiple=True, help="Override parameters")
+@click.option("--tags", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
+@click.option("--node", "-n", type=str, multiple=True, help="Run only nodes with specified names")
+@click.option("--to-nodes", type=str, multiple=True, help="Run a sub-pipeline up to certain nodes")
+@click.option("--from-nodes", type=str, multiple=True, help="Run a sub-pipeline starting from certain nodes")
+@click.option("--from-inputs", type=str, multiple=True, help="Run a sub-pipeline starting from nodes that produce these inputs")
+@click.option("--to-outputs", type=str, multiple=True, help="Run a sub-pipeline up to nodes that produce these outputs")
+@click.option("--load-version", type=str, multiple=True, help="Specify a particular dataset version")
+@click.option("--namespaces", type=str, multiple=True, help="Namespaces of the pipeline")
+@click.pass_obj
+def _run_command_impl(
+    ctx,
+    pipeline: str,
+    env: str,
+    config: tuple,
+    params: tuple,
+    tags: list[str],
+    node: tuple,
+    to_nodes: tuple,
+    from_nodes: tuple,
+    from_inputs: tuple,
+    to_outputs: tuple,
+    load_version: tuple,
+    namespaces: Iterable[str],
+):    
+    """Run the pipeline with the FusedRunner."""
+    load_versions = None
+    if load_version:
+        load_versions = {}
+        for version_spec in load_version:
+            if ":" in version_spec:
+                dataset, version = version_spec.split(":", 1)
+                load_versions[dataset] = version
+
+    conf_source = getattr(ctx, "conf_source", None)
+    env_value = env or getattr(ctx, "env", None)
+
+    with KedroSession.create(
+        env=env_value,
+        conf_source=conf_source,
+    ) as session:
+
+        session.run(
+            pipeline_name=pipeline,
+            tags=tags,
+            runner=FusedRunner(pipeline_name=pipeline),
+            node_names=list(node) if node else None,
+            from_nodes=list(from_nodes) if from_nodes else None,
+            to_nodes=list(to_nodes) if to_nodes else None,
+            from_inputs=list(from_inputs) if from_inputs else None,
+            to_outputs=list(to_outputs) if to_outputs else None,
+            load_versions=load_versions,
+            namespaces=namespaces,
+        )
 
 @click.group(name="argo")
 def commands():

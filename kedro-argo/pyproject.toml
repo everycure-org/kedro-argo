@@ -15,6 +15,9 @@ dependencies = [
     "jinja2>=3.0.0",
 ]
 
+[project.entry-points."kedro.global_commands"]
+run = "kedro_argo.framework.cli.cli:cli"
+
 [project.entry-points."kedro.project_commands"]
 argo = "kedro_argo.framework.cli.cli:commands"
 

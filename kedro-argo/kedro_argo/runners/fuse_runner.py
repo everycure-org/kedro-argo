@@ -7,10 +7,44 @@ from pluggy import PluginManager
 
 from kedro_argo.pipeline.fused_pipeline import FusedNode
 
+import os
+import re
+from pathlib import Path
+from typing import Any, Dict, List
+from logging import getLogger
+
+import click
+import yaml
+from kubernetes import config
+from kubernetes.dynamic import DynamicClient
+from jinja2 import Environment, FileSystemLoader
+from kedro.framework.project import pipelines as kedro_pipelines
+from kedro.framework.cli.utils import find_run_command
+from kedro.pipeline import Pipeline
+from kedro.pipeline.node import Node
+
+LOGGER = getLogger(__name__)
+ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
+
+
 class FusedRunner(SequentialRunner):
     """Fused runner is an extension of the SequentialRunner that
     essentially unpacks the FusedNode back to the contained nodes for
     execution."""
+
+    def __init__(
+        self,
+        is_async: bool = False,
+        pipeline_name: str | None = None,
+    ):
+        """Instantiates the runner class.
+
+        Args:
+            is_async: If True, the node inputs and outputs are loaded and saved
+                asynchronously with threads. Defaults to False.
+        """
+        self._is_async = is_async
+        self._pipeline_name = pipeline_name
 
     def _run(
         self,
@@ -19,11 +53,8 @@ class FusedRunner(SequentialRunner):
         hook_manager: PluginManager,
         session_id: str | None = None,
     ) -> None:
-        
         nodes = pipeline.nodes
 
-        # Use memory datasets for intermediate nodes
-        # TODO: Expose flag?
         for node in nodes:
             if isinstance(node, FusedNode):
                 pipeline = Pipeline(node._nodes)
@@ -32,9 +63,7 @@ class FusedRunner(SequentialRunner):
                 for dataset in pipeline.datasets():
 
                     found = False
-
-                    # TODO: Pass actual pipeline as part of CLI
-                    for pipeline_node in pipelines["__default__"].nodes:
+                    for pipeline_node in pipelines[self._pipeline_name].nodes:
                         if node.name != pipeline_node.name:
                             if dataset in pipeline_node.inputs:
                                 found = True
