@@ -28,14 +28,14 @@ from kedro.framework.cli.project import (
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-
+from kedro.runner.sequential_runner import SequentialRunner
 from kedro_argo.runners.fuse_runner import FusedRunner
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
-@click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
+@click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
 
@@ -45,7 +45,7 @@ def cli():
 @click.option("--config", "-c", type=str, multiple=True, help="Extra config to pass to KedroContext")
 @click.option("--params", type=str, multiple=True, help="Override parameters")
 @click.option("--tags", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
-@click.option("--node", "-n", type=str, multiple=True, help="Run only nodes with specified names")
+@click.option("--nodes", "-n", type=str, multiple=True, help="Run only nodes with specified names")
 @click.option("--to-nodes", type=str, multiple=True, help="Run a sub-pipeline up to certain nodes")
 @click.option("--from-nodes", type=str, multiple=True, help="Run a sub-pipeline starting from certain nodes")
 @click.option("--from-inputs", type=str, multiple=True, help="Run a sub-pipeline starting from nodes that produce these inputs")
@@ -60,7 +60,7 @@ def _run_command_impl(
     config: tuple,
     params: tuple,
     tags: list[str],
-    node: tuple,
+    nodes: tuple,
     to_nodes: tuple,
     from_nodes: tuple,
     from_inputs: tuple,
@@ -69,6 +69,9 @@ def _run_command_impl(
     namespaces: Iterable[str],
 ):    
     """Run the pipeline with the FusedRunner."""
+
+    LOGGER.warning(f"Using plugin entrypoint")
+    
     load_versions = None
     if load_version:
         load_versions = {}
@@ -89,7 +92,7 @@ def _run_command_impl(
             pipeline_name=pipeline,
             tags=tags,
             runner=FusedRunner(pipeline_name=pipeline),
-            node_names=list(node) if node else None,
+            node_names=list(nodes) if nodes else None,
             from_nodes=list(from_nodes) if from_nodes else None,
             to_nodes=list(to_nodes) if to_nodes else None,
             from_inputs=list(from_inputs) if from_inputs else None,
