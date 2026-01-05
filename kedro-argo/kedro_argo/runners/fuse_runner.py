@@ -61,7 +61,7 @@ class FusedRunner(SequentialRunner):
             if isinstance(node, FusedNode):
                 pipeline = Pipeline(node._nodes)
 
-                outputs = []
+                outputs = pipeline.outputs()
                 for dataset in pipeline.datasets():
 
                     found = False
