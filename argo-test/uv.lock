@@ -153,7 +153,7 @@ requires-dist = [
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },
     { name = "kedro", extras = ["jupyter"], specifier = "~=1.1.1" },
-    { name = "kedro-argo", directory = "../kedro-argo" },
+    { name = "kedro-argo", editable = "../kedro-argo" },
     { name = "kedro-datasets", extras = ["matplotlib-matplotlibdataset", "pandas-csvdataset", "pandas-exceldataset", "pandas-parquetdataset", "plotly-jsondataset", "plotly-plotlydataset"], specifier = ">=3.0" },
     { name = "kedro-viz", specifier = ">=6.7.0" },
     { name = "kubernetes" },
@@ -1334,7 +1334,7 @@ jupyter = [
 [[package]]
 name = "kedro-argo"
 version = "0.1.0"
-source = { directory = "../kedro-argo" }
+source = { editable = "../kedro-argo" }
 dependencies = [
     { name = "jinja2" },
     { name = "kedro" },
