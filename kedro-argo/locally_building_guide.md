@@ -49,7 +49,9 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 
 # Install Production Build
 
+```bash
 pip install argo-kedro
+```
 
 ## Version Management
 
