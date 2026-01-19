@@ -7,13 +7,13 @@ metadata:
 spec:
   workflowMetadata:
     labels:
-      plugin: kedro-argo 
+      plugin: argo-kedro 
   entrypoint: "pipeline"
   templates:
   - name: kedro
     metadata:
       labels:
-        app: kedro-argo
+        app: argo-kedro
     inputs:
       parameters:
       - name: pipeline

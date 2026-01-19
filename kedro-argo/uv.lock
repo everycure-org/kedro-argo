@@ -297,7 +297,7 @@ wheels = [
 ]
 
 [[package]]
-name = "kedro-argo"
+name = "argo-kedro"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
