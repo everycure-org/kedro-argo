@@ -22,8 +22,8 @@ python -m build
 ```
 
 This creates:
-- `dist/argo_kedro-0.1.0-py3-none-any.whl` (wheel distribution)
-- `dist/argo-kedro-0.1.0.tar.gz` (source distribution)
+- `dist/argo_kedro-0.1.2-py3-none-any.whl` (wheel distribution)
+- `dist/argo_kedro-0.1.2.tar.gz` (source distribution)
 
 ## Test the Package Locally
 
@@ -31,7 +31,7 @@ This creates:
 # Install in a new virtual environment
 python -m venv test_env
 source test_env/bin/activate
-pip install dist/argo_kedro-0.1.0-py3-none-any.whl
+pip install dist/argo_kedro-0.1.2-py3-none-any.whl
 
 # Test the installation
 python -c "import argo_kedro; print('Import successful')"
@@ -56,7 +56,7 @@ pip install argo-kedro
 Update version in `pyproject.toml` before each release:
 
 ```toml
-version = "0.1.0"  # Increment for each release
+version = "0.1.2"  # Increment for each release
 ```
 
 Follow semantic versioning: MAJOR.MINOR.PATCH
@@ -70,7 +70,7 @@ Follow semantic versioning: MAJOR.MINOR.PATCH
 - [ ] Test installation from built package
 - [ ] All tests pass
 - [ ] Update CHANGELOG (if you have one)
-- [ ] Create git tag: `git tag v0.1.0 && git push origin v0.1.0`
+- [ ] Create git tag: `git tag v0.1.2 && git push origin v0.1.2`
 
 ## Post-release
 

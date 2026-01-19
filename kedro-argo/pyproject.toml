@@ -14,7 +14,7 @@ authors = [
     {name = "Laurens Vijnck", email = "laurens@everycure.org"},
     {name = "Nelson Alfonso", email = "nelson@everycure.org"}
 ]
-keywords = ["kedro", "argo", "workflows","argo workflows", "kubernetes", "pipeline"]
+keywords = ["kedro", "argo", "workflows", "argo workflows", "kubernetes", "pipeline"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -40,16 +40,16 @@ Repository = "https://github.com/everycure-org/argo-kedro"
 Issues = "https://github.com/everycure-org/argo-kedro/issues"
 
 [project.entry-points."kedro.global_commands"]
-run = "argo_kedro.framework.cli.cli:cli"
+run = "kedro_argo.framework.cli.cli:cli"
 
 [project.entry-points."kedro.project_commands"]
-argo = "argo_kedro.framework.cli.cli:commands"
+argo = "kedro_argo.framework.cli.cli:commands"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["argo_kedro*"]
+include = ["kedro_argo*"]
 
 [tool.setuptools.package-data]
-argo_kedro = ["**/*.tmpl"]
+kedro_argo = ["**/*.tmpl"]
