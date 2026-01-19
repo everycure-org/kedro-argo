@@ -14,7 +14,7 @@ authors = [
     {name = "Laurens Vijnck", email = "laurens@everycure.org"},
     {name = "Nelson Alfonso", email = "nelson@everycure.org"}
 ]
-keywords = ["kedro", "argo", "workflows","argo workflows", "kubernetes", "pipeline"]
+keywords = ["kedro", "argo", "workflows", "argo workflows", "kubernetes", "pipeline"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
