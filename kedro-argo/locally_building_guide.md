@@ -34,7 +34,7 @@ source test_env/bin/activate
 pip install dist/argo_kedro-0.1.2-py3-none-any.whl
 
 # Test the installation
-python -c "import kedro_argo; print('Import successful')"
+python -c "import argo_kedro; print('Import successful')"
 
 # Deactivate and remove test environment
 deactivate
