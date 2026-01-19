@@ -56,7 +56,7 @@ pip install argo-kedro
 Update version in `pyproject.toml` before each release:
 
 ```toml
-version = "0.1.0"  # Increment for each release
+version = "0.1.2"  # Increment for each release
 ```
 
 Follow semantic versioning: MAJOR.MINOR.PATCH
@@ -70,7 +70,7 @@ Follow semantic versioning: MAJOR.MINOR.PATCH
 - [ ] Test installation from built package
 - [ ] All tests pass
 - [ ] Update CHANGELOG (if you have one)
-- [ ] Create git tag: `git tag v0.1.0 && git push origin v0.1.0`
+- [ ] Create git tag: `git tag v0.1.2 && git push origin v0.1.2`
 
 ## Post-release
 
