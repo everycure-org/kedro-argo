@@ -29,7 +29,7 @@ from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from kedro.runner.sequential_runner import SequentialRunner
-from kedro_argo.runners.fuse_runner import FusedRunner
+from argo_kedro.runners.fuse_runner import FusedRunner
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
