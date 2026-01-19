@@ -22,8 +22,8 @@ python -m build
 ```
 
 This creates:
-- `dist/kedro_argo-0.1.2-py3-none-any.whl` (wheel distribution)
-- `dist/argo-kedro-0.1.2.tar.gz` (source distribution)
+- `dist/argo_kedro-0.1.2-py3-none-any.whl` (wheel distribution)
+- `dist/argo_kedro-0.1.2.tar.gz` (source distribution)
 
 ## Test the Package Locally
 
@@ -31,10 +31,10 @@ This creates:
 # Install in a new virtual environment
 python -m venv test_env
 source test_env/bin/activate
-pip install dist/kedro_argo-0.1.2-py3-none-any.whl
+pip install dist/argo_kedro-0.1.2-py3-none-any.whl
 
 # Test the installation
-python -c "import kedro_argo; print('Import successful')"
+python -c "import argo_kedro; print('Import successful')"
 
 # Deactivate and remove test environment
 deactivate
