@@ -22,6 +22,7 @@ jobs:
         pip install build twine
     
     - name: Build package
+      working-directory: kedro-argo
       run: python -m build
     
     - name: Publish to PyPI
@@ -29,4 +30,4 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         TWINE_REPOSITORY: pypi
-      run: twine upload dist/*
+      run: twine upload kedro-argo/dist/*
