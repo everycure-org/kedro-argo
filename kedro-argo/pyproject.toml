@@ -4,16 +4,40 @@ requires = ["setuptools>=65.5.1", "setuptools-scm>=8.0"]  # PEP 518 specificatio
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kedro-argo"
-version = "0.1.0"
-description = "Add your description here"
+name = "argo-kedro"
+version = "0.1.2"
+description = "Kedro plugin for running pipelines on Argo Workflows"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Laurens Vijnck", email = "laurens@everycure.org"},
+    {name = "Nelson Alfonso", email = "nelson@everycure.org"}
+]
+keywords = ["kedro", "argo", "workflows", "argo workflows", "kubernetes", "pipeline"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Framework :: Kedro",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "kedro",
     "pyyaml>=6.0.2",
     "jinja2>=3.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/everycure-org/argo-kedro"
+Repository = "https://github.com/everycure-org/argo-kedro"
+Issues = "https://github.com/everycure-org/argo-kedro/issues"
 
 [project.entry-points."kedro.global_commands"]
 run = "kedro_argo.framework.cli.cli:cli"
