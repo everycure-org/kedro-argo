@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v6
     
@@ -31,3 +33,17 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         TWINE_REPOSITORY: pypi
       run: twine upload kedro-argo/dist/*
+    
+    - name: Get package version
+      id: version
+      run: |
+        VERSION=$(python -c "import tomllib; f=open('kedro-argo/pyproject.toml','rb'); print(tomllib.load(f)['project']['version'])")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
+        files: kedro-argo/dist/*
+        generate_release_notes: true
