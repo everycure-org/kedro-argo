@@ -1,5 +1,5 @@
 docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse
-TAG ?= ${USER}
+TAG = latest
 TARGET_PLATFORM ?= linux/amd64
 
 docker_auth:

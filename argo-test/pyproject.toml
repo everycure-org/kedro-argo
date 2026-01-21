@@ -78,6 +78,3 @@ ignore = [
 
 [tool.kedro_telemetry]
 project_id = "ac60f8a981ee4ae8a2a0d6d8d7d28ee1"
-
-[tool.uv.sources]
-argo-kedro = { path = "../argo-kedro", editable = true }

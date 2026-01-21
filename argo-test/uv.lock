@@ -123,14 +123,27 @@ wheels = [
 ]
 
 [[package]]
+name = "argo-kedro"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "kedro" },
+    { name = "pyyaml" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/de/6511a7c0c32426b59ef97ec49d7b3ed6f0200ae4b24683c84e811bb2c497/argo_kedro-0.1.0-py3-none-any.whl", hash = "sha256:eef0255937b6c25e2419d17efbda83eb80755e2b0e298306516d60188f04ef88", size = 10166, upload-time = "2026-01-19T16:08:10.541Z" },
+]
+
+[[package]]
 name = "argo-test"
 source = { editable = "." }
 dependencies = [
+    { name = "argo-kedro" },
     { name = "gcsfs" },
     { name = "ipython" },
     { name = "jupyterlab" },
     { name = "kedro", extra = ["jupyter"] },
-    { name = "argo-kedro" },
     { name = "kedro-datasets", extra = ["matplotlib-matplotlibdataset", "pandas-csvdataset", "pandas-exceldataset", "pandas-parquetdataset", "plotly-jsondataset", "plotly-plotlydataset"] },
     { name = "kedro-viz" },
     { name = "kubernetes" },
@@ -149,11 +162,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "argo-kedro" },
     { name = "gcsfs" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },
     { name = "kedro", extras = ["jupyter"], specifier = "~=1.1.1" },
-    { name = "argo-kedro", editable = "../argo-kedro" },
     { name = "kedro-datasets", extras = ["matplotlib-matplotlibdataset", "pandas-csvdataset", "pandas-exceldataset", "pandas-parquetdataset", "plotly-jsondataset", "plotly-plotlydataset"], specifier = ">=3.0" },
     { name = "kedro-viz", specifier = ">=6.7.0" },
     { name = "kubernetes" },
@@ -1329,23 +1342,6 @@ wheels = [
 jupyter = [
     { name = "ipylab" },
     { name = "notebook" },
-]
-
-[[package]]
-name = "argo-kedro"
-version = "0.1.0"
-source = { editable = "../argo-kedro" }
-dependencies = [
-    { name = "jinja2" },
-    { name = "kedro" },
-    { name = "pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "jinja2", specifier = ">=3.0.0" },
-    { name = "kedro" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
 ]
 
 [[package]]
