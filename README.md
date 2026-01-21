@@ -82,7 +82,7 @@ docker_push: docker_auth docker_build
 	docker push $(docker_image):${TAG}
 
 submit: docker_push
-  kedro submit --image $(docker_image)
+  kedro submit --image $(docker_image) --namespace argo-workflows
 ```
 
 Run the following command to run on the cluster:
