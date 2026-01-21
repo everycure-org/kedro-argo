@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "argo-kedro"
-version = "0.1.2"
+version = "0.1.3"
 description = "Kedro plugin for running pipelines on Argo Workflows"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,16 +40,16 @@ Repository = "https://github.com/everycure-org/argo-kedro"
 Issues = "https://github.com/everycure-org/argo-kedro/issues"
 
 [project.entry-points."kedro.global_commands"]
-run = "kedro_argo.framework.cli.cli:cli"
+run = "argo_kedro.framework.cli.cli:cli"
 
 [project.entry-points."kedro.project_commands"]
-argo = "kedro_argo.framework.cli.cli:commands"
+argo = "argo_kedro.framework.cli.cli:commands"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["kedro_argo*"]
+include = ["argo_kedro*"]
 
 [tool.setuptools.package-data]
-kedro_argo = ["**/*.tmpl"]
+argo_kedro = ["**/*.tmpl"]

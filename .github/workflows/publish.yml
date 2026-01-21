@@ -24,7 +24,7 @@ jobs:
         pip install build twine
     
     - name: Build package
-      working-directory: kedro-argo
+      working-directory: argo-kedro
       run: python -m build
     
     - name: Publish to PyPI
@@ -32,12 +32,12 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         TWINE_REPOSITORY: pypi
-      run: twine upload kedro-argo/dist/*
+      run: twine upload argo-kedro/dist/*
     
     - name: Get package version
       id: version
       run: |
-        VERSION=$(python -c "import tomllib; f=open('kedro-argo/pyproject.toml','rb'); print(tomllib.load(f)['project']['version'])")
+        VERSION=$(python -c "import tomllib; f=open('argo-kedro/pyproject.toml','rb'); print(tomllib.load(f)['project']['version'])")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Create GitHub Release
@@ -45,5 +45,5 @@ jobs:
       with:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
-        files: kedro-argo/dist/*
+        files: argo-kedro/dist/*
         generate_release_notes: true
