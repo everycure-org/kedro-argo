@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "argo-kedro"
-version = "0.1.3"
+version = "0.1.4"
 description = "Kedro plugin for running pipelines on Argo Workflows"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ dependencies = [
     "kedro",
     "pyyaml>=6.0.2",
     "jinja2>=3.0.0",
+    "kubernetes>=35.0.0",
 ]
 
 [project.urls]
