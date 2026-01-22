@@ -33,17 +33,3 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         TWINE_REPOSITORY: pypi
       run: twine upload argo-kedro/dist/*
-    
-    - name: Get package version
-      id: version
-      run: |
-        VERSION=$(python -c "import tomllib; f=open('argo-kedro/pyproject.toml','rb'); print(tomllib.load(f)['project']['version'])")
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-    
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ steps.version.outputs.version }}
-        name: Release v${{ steps.version.outputs.version }}
-        files: argo-kedro/dist/*
-        generate_release_notes: true
