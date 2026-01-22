@@ -57,11 +57,12 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY --from=ghcr.io/astral-sh/uv:3.22 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.6.9 /uv /uvx /bin/
 
 COPY pyproject.toml .
+COPY uv.lock .
 
-RUN uv sync --frozen
+RUN uv sync --frozen --no-install-project
 
 COPY . .
 ```
