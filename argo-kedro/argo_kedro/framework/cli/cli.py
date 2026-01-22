@@ -154,14 +154,21 @@ def submit(
         kind=yaml_data["kind"],
     )
 
-    resource.create(
+    response = resource.create(
         body=yaml_data,
         namespace=namespace
     )
+    
+    workflow_name = response.metadata.name
+    LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
+    LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{namespace}/{workflow_name}")
+    
+    return workflow_name
 
 
 def save_argo_template(argo_template: str) -> str:
     file_path = Path("templates") / "argo-workflow-template.yml"
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
