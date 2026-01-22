@@ -21,8 +21,8 @@ dependencies = [
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
     "kubernetes",
-    "argo-kedro",
-    "gcsfs"
+    "argo-kedro==0.1.5",
+    "gcsfs",
 ]
 
 [project.scripts]
