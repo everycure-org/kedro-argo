@@ -59,12 +59,8 @@ WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:0.6.9 /uv /uvx /bin/
 
-COPY pyproject.toml .
-COPY uv.lock .
-
-RUN uv sync --frozen --no-install-project
-
 COPY . .
+RUN uv sync --frozen
 ```
 
 ### Execute pipeline
