@@ -161,7 +161,7 @@ def submit(
     
     workflow_name = response.metadata.name
     LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
-    LOGGER.info(f"View workflow at: https://your-argo-server.com/workflows/{namespace}/{workflow_name}")
+    LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{namespace}/{workflow_name}")
     
     return workflow_name
 
