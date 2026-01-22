@@ -19,8 +19,8 @@ RUN apt-get update && \
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY . .
-
 WORKDIR /app/argo-test
+COPY argo-test/pyproject.toml .
 RUN uv sync --frozen
+COPY . /app
 ENV PATH=/app/argo-test/.venv/bin:$PATH
