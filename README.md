@@ -130,6 +130,14 @@ COPY . .
 RUN uv sync --frozen
 ```
 
+### Create .dockerignore
+
+Add a `.dockerignore` file with the contents below to avoid constant re-uploading of your venv.
+
+```
+.venv
+```
+
 ### Execute pipeline
 
 Finally, build and push the image to the `ai-platform-registry` so the cluster has permissions to access the container. Add the following `Makefile` to the repository. Replace `your-project-name` with the name of your project.
