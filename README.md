@@ -36,7 +36,7 @@ gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region u
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
 
 ```bash
-uv add gcsfs
+uv add fsspec[gcs]
 ```
 
 ### Registering the globals file
