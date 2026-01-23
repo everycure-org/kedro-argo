@@ -31,7 +31,47 @@ Run the following CLI command to setup the cluster credentials.
 gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region us-central1 --project ec-ai-platform-dev
 ```
 
-## Building your image
+## Setting up your cloud environment
+
+Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
+
+```bash
+uv add gcsfs
+```
+
+### Registering the globals file
+
+Kedro allows customizing variables based on the environment, which unlocks local data storage for testing, while leveraging Cloud Storage for running on the cluster. First, enable the use of the globals in the `settings.py` file.
+
+### Parametrizing the base path
+
+Start by defining the globals file for the base environment.
+
+```yaml
+# Definition for base/globals.yml for local storage
+paths:
+	base: data/
+```
+
+Next, define the globals file for the cloud environment.
+
+```yaml
+# Definition for base/globals.yml for local storage
+paths:
+	base: gs://ai-platform-dev-everycure-storage/<your_project_name>
+```
+
+Finally, ensure the parametrized path is used, for example:
+
+```
+preprocessed_companies:
+  type: pandas.ParquetDataset
+  # This ensures that local storage is used in the base, while cloud storage
+  # is used while running on the cluster.
+  filepath: {globals:paths.base}/02_intermediate/preprocessed_companies.parquet
+```
+
+## Submitting to the cluster
 
 > This part is a temporarily solution only, it will be absorbed by the plugin going forward. For now, you will have to build your own container for executing on the cluster.
 
