@@ -90,7 +90,9 @@ preprocessed_companies:
 
 ## Submitting to the cluster
 
-> This part is a temporarily solution only, it will be absorbed by the plugin going forward. For now, you will have to build your own container for executing on the cluster.
+### Ensure all catalog entries are registered
+
+This is a very early version of the plugin, which does _not_ support memory datasets. Ensure your pipeline does not use memory datasets, as this will lead to failures. We will be introducing a mechanism that will support this in the future.
 
 ### Ensure you have a Dockerfile
 
