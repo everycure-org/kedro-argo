@@ -97,9 +97,19 @@ RUN apt-get update && \
 
 WORKDIR /app
 
+ENV UV_LINK_MODE=copy
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 COPY --from=ghcr.io/astral-sh/uv:0.6.9 /uv /uvx /bin/
 
+COPY pyproject.toml .
+COPY uv.lock .
+RUN uv sync --frozen --no-install-project
+ENV PATH=/app/.venv/bin:$PATH
+
 COPY . .
+
 RUN uv sync --frozen
 ```
 
