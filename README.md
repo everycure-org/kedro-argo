@@ -41,7 +41,24 @@ uv add fsspec[gcs]
 
 ### Registering the globals file
 
-Kedro allows customizing variables based on the environment, which unlocks local data storage for testing, while leveraging Cloud Storage for running on the cluster. First, enable the use of the globals in the `settings.py` file.
+Kedro allows customizing variables based on the environment, which unlocks local data storage for testing, while leveraging Cloud Storage for running on the cluster. First, enable the use of the globals in the `settings.py` file. To do so, replace the `CONFIG_LOADER_ARGS` setting with the contents below:
+
+```python
+CONFIG_LOADER_ARGS = {
+    "base_env": "base",
+    "default_run_env": "local",
+    "merge_strategy": {"parameters": "soft", "globals": "soft"},
+    "config_patterns": {
+        "globals": ["globals*", "globals*/**", "**/globals*"],
+        "parameters": [
+            "parameters*",
+            "parameters*/**",
+            "**/parameters*",
+            "**/parameters*/**",
+        ],
+    },
+}
+```
 
 ### Parametrizing the base path
 
@@ -50,7 +67,7 @@ Start by defining the globals file for the base environment.
 ```yaml
 # Definition for base/globals.yml for local storage
 paths:
-	base: data/
+	base: data
 ```
 
 Next, define the globals file for the cloud environment.
@@ -68,7 +85,7 @@ preprocessed_companies:
   type: pandas.ParquetDataset
   # This ensures that local storage is used in the base, while cloud storage
   # is used while running on the cluster.
-  filepath: {globals:paths.base}/02_intermediate/preprocessed_companies.parquet
+  filepath: ${globals:paths.base}/02_intermediate/preprocessed_companies.parquet
 ```
 
 ## Submitting to the cluster
@@ -133,7 +150,7 @@ docker_push: docker_auth docker_build
 	docker push $(docker_image):${TAG}
 
 submit: docker_push
-	uv run kedro submit --image $(docker_image) --namespace argo-workflows
+	uv run kedro submit --image $(docker_image) --namespace argo-workflows --env cloud
 ```
 
 Run the following command to run on the cluster:
