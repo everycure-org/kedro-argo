@@ -23,14 +23,6 @@ uv pip install -r requirements.txt
 uv add argo-kedro
 ```
 
-## Ensure you have the correct kubeconfig set
-
-Run the following CLI command to setup the cluster credentials.
-
-```bash
-gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region us-central1 --project ec-ai-platform-dev
-```
-
 ## Setting up your cloud environment
 
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
@@ -89,6 +81,14 @@ preprocessed_companies:
 ```
 
 ## Submitting to the cluster
+
+### Ensure you have the correct kubeconfig set
+
+Run the following CLI command to setup the cluster credentials.
+
+```bash
+gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region us-central1 --project ec-ai-platform-dev
+```
 
 ### Ensure all catalog entries are registered
 
