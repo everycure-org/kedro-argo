@@ -1,7 +1,7 @@
 import pytest
 
 from kedro.pipeline import Pipeline, node
-from kedro_argo.pipeline.fused_pipeline import FusedPipeline, FusedNode
+from argo_kedro.pipeline.fused_pipeline import FusedPipeline, FusedNode
 
 @pytest.fixture
 def pipeline() -> Pipeline:

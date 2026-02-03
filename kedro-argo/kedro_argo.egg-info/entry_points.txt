@@ -1,5 +1,0 @@
-[kedro.global_commands]
-run = kedro_argo.framework.cli.cli:cli
-
-[kedro.project_commands]
-argo = kedro_argo.framework.cli.cli:commands

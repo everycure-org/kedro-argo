@@ -1,8 +1,8 @@
 import pytest
 
 from kedro.pipeline import Pipeline, node
-from kedro_argo.pipeline import FusedPipeline
-from kedro_argo.framework.cli.cli import get_argo_dag
+from argo_kedro.pipeline import FusedPipeline
+from argo_kedro.framework.cli.cli import get_argo_dag
 
 @pytest.fixture
 def pipeline() -> Pipeline:
