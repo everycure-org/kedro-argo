@@ -5,7 +5,7 @@ from kedro.io.memory_dataset import MemoryDataset
 from kedro.runner.sequential_runner import SequentialRunner
 from pluggy import PluginManager
 
-from kedro_argo.pipeline.fused_pipeline import FusedNode
+from argo_kedro.pipeline.fused_pipeline import FusedNode
 
 import os
 import re

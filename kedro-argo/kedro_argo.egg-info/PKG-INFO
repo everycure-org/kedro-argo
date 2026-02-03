@@ -1,3 +1,13 @@
+Metadata-Version: 2.4
+Name: kedro-argo
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: kedro
+Requires-Dist: pyyaml>=6.0.2
+Requires-Dist: jinja2>=3.0.0
+
 # Usage
 
 - Ensure kubeconfig is set correctly
@@ -20,11 +30,6 @@ Assumptions:
 
 - For the image building, we assume the user enters the path to a valid GAR repository, which the cluster is assumed to have permissions to. 
 - We work with the `latest` tag only, as Argo ensures to apply `imagePullPolicy: Always` in that case
-
-Current issue:
-
-- It seems like installing both the k8s and gcfs libs give authentication issues
-- current workaround: `uv pip uninstall gcsfs`
 
 ## Horizon 2
 

@@ -21,8 +21,8 @@ dependencies = [
     "scikit-learn~=1.5.1",
     "seaborn~=0.12.1",
     "kubernetes",
-    "kedro-argo",
-    "gcsfs"
+    "argo-kedro==0.1.5",
+    "gcsfs",
 ]
 
 [project.scripts]
@@ -78,6 +78,3 @@ ignore = [
 
 [tool.kedro_telemetry]
 project_id = "ac60f8a981ee4ae8a2a0d6d8d7d28ee1"
-
-[tool.uv.sources]
-kedro-argo = { path = "../kedro-argo", editable = true }

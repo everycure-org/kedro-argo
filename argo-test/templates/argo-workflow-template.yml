@@ -6,19 +6,19 @@ metadata:
 spec:
   workflowMetadata:
     labels:
-      plugin: kedro-argo
+      plugin: argo-kedro
   entrypoint: pipeline
   templates:
   - name: kedro
     metadata:
       labels:
-        app: kedro-argo
+        app: argo-kedro
     inputs:
       parameters:
       - name: pipeline
       - name: kedro_nodes
     container:
-      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse:laurens
+      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse:latest
       command:
       - kedro
       imagePullPolicy: Always

@@ -28,6 +28,8 @@ spec:
       - "{{ '{{inputs.parameters.pipeline}}' }}"
       - "--nodes"
       - "{{ '{{inputs.parameters.kedro_nodes}}' }}"
+      - "--runner"
+      - "kedro_argo.runners.FusedRunner"
       - "--env"
       - "{{ environment }}"
 

@@ -1,4 +1,4 @@
-IMAGE := us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse:laurens
+IMAGE := us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse:latest
 NAMESPACE := argo-workflows
 
 submit:
