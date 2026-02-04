@@ -364,7 +364,12 @@ def get_argo_dag(
     # allowing us to easily translate the Kedro DAG to an Argo WF.
     for group in pipeline.grouped_nodes:
         for target_node in group:
-            task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) else machine_types[default_machine_type])
+            try:
+                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) else machine_types[default_machine_type])
+            except KeyError as e:
+                LOGGER.error(f"Machine type not found for node `{target_node.name}`")
+                raise KeyError(f"Machine type `{target_node.machine_type}` not found for node `{target_node.name}`")
+            
             task.add_parents(
                 [
                     parent.node

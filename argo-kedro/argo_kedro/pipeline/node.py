@@ -20,3 +20,7 @@ class ArgoNode(Node):
 
         super().__init__(func, inputs, outputs, name=name, tags=tags, confirms=confirms, namespace=namespace)
         self._machine_type = machine_type
+
+    @property
+    def machine_type(self) -> str:
+        return self._machine_type
