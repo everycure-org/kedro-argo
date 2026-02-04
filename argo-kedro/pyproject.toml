@@ -33,6 +33,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "jinja2>=3.0.0",
     "kubernetes>=35.0.0",
+    "pydantic>=2.0.0",
 ]
 
 [project.urls]
@@ -45,6 +46,9 @@ run = "argo_kedro.framework.cli.cli:cli"
 
 [project.entry-points."kedro.project_commands"]
 argo = "argo_kedro.framework.cli.cli:commands"
+
+[project.entry-points."kedro.hooks"]
+argo_hook = "argo_kedro.framework.hooks.argo_hook:argo_hook"
 
 [tool.setuptools]
 include-package-data = true

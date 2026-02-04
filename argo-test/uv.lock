@@ -124,17 +124,23 @@ wheels = [
 
 [[package]]
 name = "argo-kedro"
-version = "0.1.5"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.6"
+source = { directory = "../argo-kedro" }
 dependencies = [
     { name = "jinja2" },
     { name = "kedro" },
     { name = "kubernetes" },
+    { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/18/da/1f45720445135d7f4ccbcaba6e747a79e2a730dd37567989a7d8be987c5f/argo_kedro-0.1.5.tar.gz", hash = "sha256:7f64a9c2ac40307d019af64ca18d706668f8ddc34e46843e5d1711c48f9aa639", size = 49291, upload-time = "2026-01-22T09:45:13.418Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/fa/2edb67117efe4407c199d451fad7c63d7296b4f2dc714799857746e193d0/argo_kedro-0.1.5-py3-none-any.whl", hash = "sha256:509df5b0da6ecec56cb8f331315f79c4bf69df4d4988d6de85cb8ddbdd3b304a", size = 10163, upload-time = "2026-01-22T09:45:12.628Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "jinja2", specifier = ">=3.0.0" },
+    { name = "kedro" },
+    { name = "kubernetes", specifier = ">=35.0.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
 ]
 
 [[package]]
@@ -150,6 +156,7 @@ dependencies = [
     { name = "kedro-viz" },
     { name = "kubernetes" },
     { name = "notebook" },
+    { name = "pandas" },
     { name = "scikit-learn" },
     { name = "seaborn" },
 ]
@@ -164,7 +171,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "argo-kedro", specifier = "==0.1.5" },
+    { name = "argo-kedro", directory = "../argo-kedro" },
     { name = "gcsfs" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },
@@ -173,6 +180,7 @@ requires-dist = [
     { name = "kedro-viz", specifier = ">=6.7.0" },
     { name = "kubernetes" },
     { name = "notebook" },
+    { name = "pandas", specifier = ">=2.3.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "~=7.2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=3,<7" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=1.7.1,<2.0" },

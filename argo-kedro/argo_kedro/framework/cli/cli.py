@@ -239,13 +239,11 @@ def init(env: str, force: bool, silent: bool):
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--environment", "-e", type=str, default="base", help="Kedro environment to execute in")
 @click.option("--image", type=str, required=True, help="Image to execute")
-@click.option("--namespace", "-n", type=str, required=True, help="Namespace to execute in")
 @click.pass_obj
 def submit(
     ctx,
     pipeline: str,
     image: str,
-    namespace: str,
     environment: str
 ):
     """Submit the pipeline to Argo."""
@@ -259,41 +257,51 @@ def submit(
 
     LOGGER.info("Rendering Argo spec...")
 
-    # Render the template
-    rendered_template = template.render(
-        pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
-        pipeline_name=pipeline,
-        image=image,
-        namespace=namespace,
-        environment=environment
-    )
+    project_path = find_kedro_project(Path.cwd()) or Path.cwd()
+    bootstrap_project(project_path)
+    with KedroSession.create(
+        project_path=project_path,
+        env=environment,
+    ) as session:
+        context = session.load_context()
 
-    # Load as yaml
-    yaml_data = yaml.safe_load(rendered_template)
-    yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
-    save_argo_template(
-        yaml_without_anchors,
-    )
+        breakpoint()
 
-    # Use kubeconfig to submit to kubernetes
-    config.load_kube_config()
-    client = DynamicClient(config.new_client_from_config())
+        # Render the template
+        rendered_template = template.render(
+            pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
+            pipeline_name=pipeline,
+            image=image,
+            namespace=context.argo.namespace,
+            environment=environment
+        )
 
-    resource = client.resources.get(
-        api_version=yaml_data["apiVersion"],
-        kind=yaml_data["kind"],
-    )
+        # Load as yaml
+        yaml_data = yaml.safe_load(rendered_template)
+        yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
+        save_argo_template(
+            yaml_without_anchors,
+        )
 
-    response = resource.create(
-        body=yaml_data,
-        namespace=namespace
-    )
-    
-    workflow_name = response.metadata.name
-    LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
-    LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{namespace}/{workflow_name}")
-    
-    return workflow_name
+        # Use kubeconfig to submit to kubernetes
+        config.load_kube_config()
+        client = DynamicClient(config.new_client_from_config())
+
+        resource = client.resources.get(
+            api_version=yaml_data["apiVersion"],
+            kind=yaml_data["kind"],
+        )
+
+        response = resource.create(
+            body=yaml_data,
+            namespace=namespace
+        )
+        
+        workflow_name = response.metadata.name
+        LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
+        LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{namespace}/{workflow_name}")
+        
+        return workflow_name
 
 
 def save_argo_template(argo_template: str) -> str:
