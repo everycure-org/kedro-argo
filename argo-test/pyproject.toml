@@ -23,6 +23,7 @@ dependencies = [
     "kubernetes",
     "argo-kedro @ file:///Users/laurens/Documents/projects/kedro-argo/argo-kedro",
     "gcsfs",
+    "fsspec",
     "pandas>=2.3.3",
 ]
 

@@ -48,7 +48,7 @@ class ArgoHook:
             self._logger.warning(
                 "No 'argo.yml' config file found in environment. Default configuration will be used. Use ``kedro argo init`` command in CLI to customize the configuration."
             )
-            # we create an empty dict to have the same behaviour when the mlflow.yml
+            # we create an empty dict to have the same behaviour when the argo.yml
             # is commented out. In this situation there is no MissingConfigException
             # but we got an empty dict
             conf_argo_yml = {}

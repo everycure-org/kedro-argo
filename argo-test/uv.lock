@@ -148,6 +148,7 @@ name = "argo-test"
 source = { editable = "." }
 dependencies = [
     { name = "argo-kedro" },
+    { name = "fsspec" },
     { name = "gcsfs" },
     { name = "ipython" },
     { name = "jupyterlab" },
@@ -172,6 +173,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "argo-kedro", directory = "../argo-kedro" },
+    { name = "fsspec" },
     { name = "gcsfs" },
     { name = "ipython", specifier = ">=8.10" },
     { name = "jupyterlab", specifier = ">=3.0" },

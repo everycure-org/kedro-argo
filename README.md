@@ -23,6 +23,14 @@ uv pip install -r requirements.txt
 uv add argo-kedro
 ```
 
+## Initialize the plugin
+
+Next, initialise the plugin, this will create a `argo.yml` file that will house components of the argo configuration.
+
+```bash
+uv run kedro argo init
+```
+
 ## Setting up your cloud environment
 
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
@@ -160,7 +168,7 @@ docker_push: docker_auth docker_build
 	docker push $(docker_image):${TAG}
 
 submit: docker_push
-	uv run kedro argo submit --image $(docker_image) --namespace argo-workflows --environment cloud
+	uv run kedro argo submit --image $(docker_image) --environment cloud
 ```
 
 Run the following command to run on the cluster:
