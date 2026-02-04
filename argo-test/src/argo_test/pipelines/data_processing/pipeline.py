@@ -1,5 +1,5 @@
 from kedro.pipeline import Node, Pipeline
-from argo_kedro.pipeline import FusedPipeline
+from argo_kedro.pipeline import FusedPipeline, ArgoNode
 
 from .nodes import create_model_input_table, preprocess_companies, preprocess_shuttles
 
@@ -8,11 +8,12 @@ def create_pipeline(**kwargs) -> Pipeline:
     return Pipeline(
         FusedPipeline(
             [
-                Node(
+                ArgoNode(
                     func=preprocess_companies,
                     inputs="companies",
                     outputs="preprocessed_companies",
                     name="preprocess_companies_node",
+                    machine_type="n1-standard-4"
                 ),
                 Node(
                     func=preprocess_shuttles,

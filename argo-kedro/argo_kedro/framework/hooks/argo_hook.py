@@ -18,8 +18,15 @@ from omegaconf import OmegaConf
 
 from pydantic import BaseModel
 
+class MachineType(BaseModel):
+    mem: int
+    cpu: int
+    num_gpu: int
+
 class ArgoConfig(BaseModel):
     namespace: str
+    machine_types: dict[str, MachineType]
+    default_machine_type: str
 
 
 class ArgoHook:

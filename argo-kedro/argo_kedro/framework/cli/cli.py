@@ -33,6 +33,8 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from kedro.runner.sequential_runner import SequentialRunner
 from argo_kedro.runners.fuse_runner import FusedRunner
+from argo_kedro.framework.hooks.argo_hook import MachineType
+from argo_kedro.pipeline.node import ArgoNode
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -253,8 +255,6 @@ def submit(
     template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template("argo_wf_spec.tmpl")
 
-    pipeline_tasks = get_argo_dag(kedro_pipelines[pipeline])
-
     LOGGER.info("Rendering Argo spec...")
 
     project_path = find_kedro_project(Path.cwd()) or Path.cwd()
@@ -264,6 +264,11 @@ def submit(
         env=environment,
     ) as session:
         context = session.load_context()
+        pipeline_tasks = get_argo_dag(
+            kedro_pipelines[pipeline], 
+            machine_types=context.argo.machine_types,
+            default_machine_type=context.argo.default_machine_type
+        )
 
         # Render the template
         rendered_template = template.render(
@@ -316,9 +321,10 @@ class ArgoTask:
     Argo's operating model slightly differs from Kedro's, i.e., while Kedro uses dataset
     dependecies to model relationships, Argo uses task dependencies."""
 
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, machine_type: MachineType):
         self._node = node
         self._parents = []
+        self._machine_type = machine_type
 
     @property
     def node(self):
@@ -332,10 +338,17 @@ class ArgoTask:
             "name": clean_name(self._node.name),
             "nodes": self._node.name,
             "deps": [clean_name(parent.name) for parent in sorted(self._parents)],
+            "mem": self._machine_type.mem,
+            "cpu": self._machine_type.cpu,
+            "num_gpu": self._machine_type.num_gpu,
         }
 
 
-def get_argo_dag(pipeline: Pipeline) -> List[Dict[str, Any]]:
+def get_argo_dag(
+    pipeline: Pipeline, 
+    machine_types: dict[str, MachineType],
+    default_machine_type: str,
+) -> List[Dict[str, Any]]:
     """Function to convert the Kedro pipeline into Argo Tasks. The function
     iterates the nodes of the pipeline and generates Argo tasks with dependencies.
     These dependencies are inferred based on the input and output datasets for
@@ -351,7 +364,7 @@ def get_argo_dag(pipeline: Pipeline) -> List[Dict[str, Any]]:
     # allowing us to easily translate the Kedro DAG to an Argo WF.
     for group in pipeline.grouped_nodes:
         for target_node in group:
-            task = ArgoTask(target_node)
+            task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) else machine_types[default_machine_type])
             task.add_parents(
                 [
                     parent.node

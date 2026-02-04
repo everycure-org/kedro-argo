@@ -18,6 +18,25 @@ spec:
       parameters:
       - name: pipeline
       - name: kedro_nodes
+    podSpecPatch: |
+      containers:
+        - name: main
+        # Add tolerations for large memory nodes and GPU nodes
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
+              {% endraw %}
     container:
       image: {{ image }}
       command: ["kedro"]
@@ -49,5 +68,10 @@ spec:
             value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.nodes }}
-
+          - name: num_gpu
+            value: {{ task.num_gpu }}
+          - name: mem
+            value: {{ task.mem }}
+          - name: cpu
+            value: {{ task.cpu }}
       {% endfor %}
