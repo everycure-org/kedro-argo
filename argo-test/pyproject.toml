@@ -25,6 +25,7 @@ dependencies = [
     "gcsfs",
     "fsspec",
     "pandas>=2.3.3",
+    "proto-plus==1.24.0.dev1"
 ]
 
 [project.scripts]

@@ -292,12 +292,12 @@ def submit(
 
         response = resource.create(
             body=yaml_data,
-            namespace=namespace
+            namespace=context.argo.namespace
         )
         
         workflow_name = response.metadata.name
         LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
-        LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{namespace}/{workflow_name}")
+        LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{context.argo.namespace}/{workflow_name}")
         
         return workflow_name
 
