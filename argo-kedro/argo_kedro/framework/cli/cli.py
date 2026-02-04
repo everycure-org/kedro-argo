@@ -265,8 +265,6 @@ def submit(
     ) as session:
         context = session.load_context()
 
-        breakpoint()
-
         # Render the template
         rendered_template = template.render(
             pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],

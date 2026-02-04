@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: workflow-
-  namespace: argo-workflows
+  namespace: test
 spec:
   workflowMetadata:
     labels:
@@ -18,7 +18,7 @@ spec:
       - name: pipeline
       - name: kedro_nodes
     container:
-      image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse:latest
+      image: dummy
       command:
       - kedro
       imagePullPolicy: Always
@@ -29,15 +29,53 @@ spec:
       - --nodes
       - '{{inputs.parameters.kedro_nodes}}'
       - --env
-      - cloud
+      - base
   - name: pipeline
     dag:
       tasks:
+      - name: compare-plot-c
+        template: kedro
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_c
       - name: data-processing-fused
         template: kedro
         arguments:
           parameters:
           - name: pipeline
-            value: data_processing
+            value: __default__
           - name: kedro_nodes
             value: data_processing_fused
+      - name: compare-plot-a
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_a
+      - name: compare-plot-b
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: compare_plot_b
+      - name: data-science-fused
+        template: kedro
+        dependencies:
+        - data-processing-fused
+        arguments:
+          parameters:
+          - name: pipeline
+            value: __default__
+          - name: kedro_nodes
+            value: data_science_fused

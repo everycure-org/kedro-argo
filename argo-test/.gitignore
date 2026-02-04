@@ -159,3 +159,5 @@ venv.bak/
 
 # mlflow local runs
 mlruns/*
+
+templates/
