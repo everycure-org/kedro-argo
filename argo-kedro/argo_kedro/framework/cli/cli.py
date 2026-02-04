@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Iterable
+from typing import Any, Dict, List, Iterable, Union
 from logging import getLogger
 
 import click
@@ -9,7 +9,10 @@ from kubernetes import config
 from kubernetes.dynamic import DynamicClient
 from jinja2 import Environment, FileSystemLoader
 from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
+from kedro.framework.project import pipelines, settings
 from kedro.framework.session import KedroSession
+from kedro.framework.startup import bootstrap_project
+from kedro.utils import find_kedro_project, is_kedro_project
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONF_SOURCE_HELP,
@@ -33,6 +36,41 @@ from argo_kedro.runners.fuse_runner import FusedRunner
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
+
+
+def render_jinja_template(
+    src: Union[str, Path], **kwargs
+) -> str:
+    """This functions enable to copy a file and render the
+    tags (identified by {{ my_tag }}) with the values provided in kwargs.
+
+    Arguments:
+        src {Union[str, Path]} -- The path to the template which should be rendered
+
+    Returns:
+        str -- A string that contains all the files with replaced tags.
+    """
+    src = Path(src)
+    template_loader = FileSystemLoader(searchpath=src.parent.as_posix())
+    template_env = Environment(loader=template_loader, keep_trailing_newline=True)
+    template = template_env.get_template(src.name)
+    return template.render(**kwargs)
+
+
+def write_jinja_template(
+    src: Union[str, Path], dst: Union[str, Path], **kwargs
+) -> None:
+    """Write a template file and replace tis jinja's tags
+     (identified by {{ my_tag }}) with the values provided in kwargs.
+
+    Arguments:
+        src {Union[str, Path]} -- Path to the template which should be rendered
+        dst {Union[str, Path]} -- Path where the rendered template should be saved
+    """
+    dst = Path(dst)
+    parsed_template = render_jinja_template(src, **kwargs)
+    with open(dst, "w") as file_handler:
+        file_handler.write(parsed_template)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -101,11 +139,103 @@ def _run_command_impl(
             namespaces=namespaces,
         )
 
+class KedroClickGroup(click.Group):
+    def reset_commands(self):
+        self.commands = {}
+
+        # add commands on the fly based on conditions
+        if is_kedro_project(find_kedro_project(Path.cwd())):
+            self.add_command(init)
+            self.add_command(submit)
+            # self.add_command(run) # TODO : IMPLEMENT THIS FUNCTION
+        # else:
+        #     self.add_command(new) # TODO : IMPLEMENT THIS FUNCTION
+
+    def list_commands(self, ctx):
+        self.reset_commands()
+        commands_list = sorted(self.commands)
+        return commands_list
+
+    def get_command(self, ctx, cmd_name):
+        self.reset_commands()
+        return self.commands.get(cmd_name)
+
 @click.group(name="argo")
 def commands():
     pass
 
-@commands.command(name="submit")
+@commands.command(name="argo", cls=KedroClickGroup)
+def argo_commands():
+    """Use mlflow-specific commands inside kedro project."""
+    pass  # pragma: no cover
+
+@argo_commands.command()
+@click.option(
+    "--env",
+    "-e",
+    default="base",
+    help="The name of the kedro environment where the 'argo.yml' should be created. Default to 'base'",
+)
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    default=False,
+    help="Update the template without any checks.",
+)
+@click.option(
+    "--silent",
+    "-s",
+    is_flag=True,
+    default=False,
+    help="Should message be logged when files are modified?",
+)
+def init(env: str, force: bool, silent: bool):
+    """Updates the template of a kedro project.
+    Running this command is mandatory to use argo-kedro.
+    This adds "conf/base/argo.yml": This is a configuration file
+    used for run parametrization when calling "kedro run" command.
+    """
+
+    # get constants
+    argo_yml = "argo.yml"
+    project_path = find_kedro_project(Path.cwd()) or Path.cwd()
+    project_metadata = bootstrap_project(project_path)
+    argo_yml_path = project_path / settings.CONF_SOURCE / env / argo_yml
+
+    # mlflow.yml is just a static file,
+    # but the name of the experiment is set to be the same as the project
+    if argo_yml_path.is_file() and not force:
+        click.secho(
+            click.style(
+                f"A 'argo.yml' already exists at '{argo_yml_path}' You can use the ``--force`` option to override it.",
+                fg="red",
+            )
+        )
+    else:
+        try:
+            write_jinja_template(
+                src=ARGO_TEMPLATES_DIR_PATH / argo_yml,
+                is_cookiecutter=False,
+                dst=argo_yml_path,
+                python_package=project_metadata.package_name,
+            )
+            if not silent:
+                click.secho(
+                    click.style(
+                        f"'{settings.CONF_SOURCE}/{env}/{argo_yml}' successfully updated.",
+                        fg="green",
+                    )
+                )
+        except FileNotFoundError:
+            click.secho(
+                click.style(
+                    f"No env '{env}' found. Please check this folder exists inside '{settings.CONF_SOURCE}' folder.",
+                    fg="red",
+                )
+            )
+
+@argo_commands.command(name="submit")
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--environment", "-e", type=str, default="base", help="Kedro environment to execute in")
 @click.option("--image", type=str, required=True, help="Image to execute")

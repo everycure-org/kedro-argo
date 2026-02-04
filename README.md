@@ -160,7 +160,7 @@ docker_push: docker_auth docker_build
 	docker push $(docker_image):${TAG}
 
 submit: docker_push
-	uv run kedro submit --image $(docker_image) --namespace argo-workflows --environment cloud
+	uv run kedro argo submit --image $(docker_image) --namespace argo-workflows --environment cloud
 ```
 
 Run the following command to run on the cluster:

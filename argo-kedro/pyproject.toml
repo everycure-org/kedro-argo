@@ -53,4 +53,4 @@ include-package-data = true
 include = ["argo_kedro*"]
 
 [tool.setuptools.package-data]
-argo_kedro = ["**/*.tmpl"]
+argo_kedro = ["**/*.tmpl", "**/*.yml"]
