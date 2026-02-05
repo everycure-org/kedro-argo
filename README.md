@@ -177,4 +177,13 @@ Run the following command to run on the cluster:
 make submit
 ```
 
+# Common errors
+
+## Authentication errors while submitting to the cluster
+
+Occasionally, the combination of the `fsspec[gcs]` and `kubernetes` dependencies give inconsistencies. A current solution is to pin the following dependency:
+
+```
+proto-plus==1.24.0.dev1
+```
 
