@@ -1,1 +1,9 @@
 namespace: argo-workflows
+
+machine_types:
+  default:
+    mem: 16
+    cpu: 4
+    num_gpu: 0
+
+default_machine_type: default
