@@ -7,18 +7,23 @@ from .nodes import create_model_input_table, preprocess_companies, preprocess_sh
 def create_pipeline(**kwargs) -> Pipeline:
     return Pipeline(
         [
-            ArgoNode(
-                func=preprocess_companies,
-                inputs="companies",
-                outputs="preprocessed_companies",
-                name="preprocess_companies_node",
-                machine_type="n1-standard-4"
-            ),
-            Node(
-                func=preprocess_shuttles,
-                inputs="shuttles",
-                outputs="preprocessed_shuttles",
-                name="preprocess_shuttles_node",
+            FusedPipeline(
+                nodes=[
+                    Node(
+                        func=preprocess_companies,
+                        inputs="companies",
+                        outputs="preprocessed_companies",
+                        name="preprocess_companies_node",
+                    ),
+                    Node(
+                        func=preprocess_shuttles,
+                        inputs="shuttles",
+                        outputs="preprocessed_shuttles",
+                        name="preprocess_shuttles_node",
+                    ),
+                ],
+                name="preprocess_data_fused",
+                machine_type="n1-standard-8"
             ),
             Node(
                 func=create_model_input_table,

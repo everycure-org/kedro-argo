@@ -149,9 +149,6 @@ class KedroClickGroup(click.Group):
         if is_kedro_project(find_kedro_project(Path.cwd())):
             self.add_command(init)
             self.add_command(submit)
-            # self.add_command(run) # TODO : IMPLEMENT THIS FUNCTION
-        # else:
-        #     self.add_command(new) # TODO : IMPLEMENT THIS FUNCTION
 
     def list_commands(self, ctx):
         self.reset_commands()
@@ -365,7 +362,7 @@ def get_argo_dag(
     for group in pipeline.grouped_nodes:
         for target_node in group:
             try:
-                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) else machine_types[default_machine_type])
+                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) and target_node.machine_type is not None else machine_types[default_machine_type])
             except KeyError as e:
                 LOGGER.error(f"Machine type not found for node `{target_node.name}`")
                 raise KeyError(f"Machine type `{target_node.machine_type}` not found for node `{target_node.name}`")
