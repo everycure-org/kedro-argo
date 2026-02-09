@@ -128,10 +128,12 @@ def _run_command_impl(
         conf_source=conf_source,
     ) as session:
 
+        context = session.load_context()
+
         session.run(
             pipeline_name=pipeline,
             tags=tags,
-            runner=FusedRunner(pipeline_name=pipeline),
+            runner=FusedRunner(pipeline_name=pipeline, use_memory_datasets=context.argo.runner.use_memory_datasets),
             node_names=list(nodes) if nodes else None,
             from_nodes=list(from_nodes) if from_nodes else None,
             to_nodes=list(to_nodes) if to_nodes else None,

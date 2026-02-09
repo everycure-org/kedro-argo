@@ -80,7 +80,7 @@ paths:
 
 Finally, ensure the parametrized path is used, for example:
 
-```
+```yaml
 preprocessed_companies:
   type: pandas.ParquetDataset
   # This ensures that local storage is used in the base, while cloud storage

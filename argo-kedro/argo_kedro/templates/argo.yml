@@ -1,4 +1,11 @@
-namespace: argo-workflows
+namespace: argo-workflows # cluster namespace to run on
+
+runner:
+  # Flag to indicate that memory datasets should be
+  # used within the fused pipeline boundary, essentially
+  # indicating that catalog entries are removed, and datasets
+  # are passed in-memory as a result.
+  use_memory_datasets: true
 
 machine_types:
   default:
