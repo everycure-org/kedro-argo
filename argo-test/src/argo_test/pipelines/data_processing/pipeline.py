@@ -1,5 +1,5 @@
-from kedro.pipeline import Node, Pipeline
-from argo_kedro.pipeline import FusedPipeline, ArgoNode
+from kedro.pipeline import Pipeline
+from argo_kedro.pipeline import FusedPipeline, Node
 
 from .nodes import create_model_input_table, preprocess_companies, preprocess_shuttles
 

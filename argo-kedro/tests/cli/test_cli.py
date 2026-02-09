@@ -1,7 +1,7 @@
 import pytest
 
-from kedro.pipeline import Pipeline, node
-from argo_kedro.pipeline import FusedPipeline, ArgoNode
+from kedro.pipeline import Pipeline, Node as KedroNode
+from argo_kedro.pipeline import FusedPipeline, Node
 from argo_kedro.framework.cli.cli import get_argo_dag, MachineType
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def default_machine_type() -> str:
 def pipeline() -> Pipeline:
     return Pipeline(
         [
-            ArgoNode(
+            Node(
                 func=lambda x: x,
                 inputs="raw_data",
                 outputs="data",
@@ -28,7 +28,7 @@ def pipeline() -> Pipeline:
                 name="preprocess_fun",
                 machine_type="n1-standard-4",
             ),
-            ArgoNode(
+            Node(
                 func=lambda x: x,
                 inputs="data",
                 outputs="model",
@@ -43,7 +43,7 @@ def pipeline() -> Pipeline:
 def fused_pipeline() -> Pipeline:
     return Pipeline(
         [
-            node(
+            KedroNode(
                 func=lambda x: x,
                 inputs="raw_data",
                 outputs="data",
@@ -52,14 +52,14 @@ def fused_pipeline() -> Pipeline:
             ),
             FusedPipeline(
                 [
-                    node(
+                    KedroNode(
                         func=lambda x: x,
                         inputs="data",
                         outputs="model",
                         tags=["training"],
                         name="train_fun",
                     ),
-                    node(
+                    KedroNode(
                         func=lambda x: x,
                         inputs="model",
                         outputs="predictions",
@@ -78,14 +78,14 @@ def fused_pipeline() -> Pipeline:
 def fused_pipeline_complex() -> Pipeline:
     return Pipeline(
         [
-            node(
+            KedroNode(
                 func=lambda x: x,
                 inputs="raw_data",
                 outputs="data",
                 tags=["preprocessing"],
                 name="preprocess_fun",
             ),
-            node(
+            KedroNode(
                 func=lambda x: x,
                 inputs="raw_customers",
                 outputs="customers",
@@ -94,14 +94,14 @@ def fused_pipeline_complex() -> Pipeline:
             ),
             FusedPipeline(
                 [
-                    node(
+                    KedroNode(
                         func=lambda x: x,
                         inputs="data",
                         outputs="model",
                         tags=["training"],
                         name="train_fun",
                     ),
-                    node(
+                    KedroNode(
                         func=lambda x, y: x,
                         inputs=["model", "customers"],
                         outputs="predictions",

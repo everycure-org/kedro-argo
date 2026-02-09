@@ -30,11 +30,10 @@ from kedro.framework.cli.project import (
 )
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
-from kedro.pipeline.node import Node
 from kedro.runner.sequential_runner import SequentialRunner
 from argo_kedro.runners.fuse_runner import FusedRunner
 from argo_kedro.framework.hooks.argo_hook import MachineType
-from argo_kedro.pipeline.node import ArgoNode
+from argo_kedro.pipeline.node import Node
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -364,7 +363,7 @@ def get_argo_dag(
     for group in pipeline.grouped_nodes:
         for target_node in group:
             try:
-                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) and target_node.machine_type is not None else machine_types[default_machine_type])
+                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, Node) and target_node.machine_type is not None else machine_types[default_machine_type])
             except KeyError as e:
                 LOGGER.error(f"Machine type not found for node `{target_node.name}`")
                 raise KeyError(f"Machine type `{target_node.machine_type}` not found for node `{target_node.name}`")
