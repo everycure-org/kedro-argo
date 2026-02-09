@@ -1,5 +1,11 @@
 namespace: argo-workflows # cluster namespace to run on
 
+deployment:
+  image: your-registry/your-image  # Docker image to use for workflow execution
+  tag: latest  # Image tag
+  target_platform: linux/amd64  # Target platform for the image
+  context: ./  # Docker build context directory (optional)
+
 runner:
   # Flag to indicate that memory datasets should be
   # used within the fused pipeline boundary, essentially

@@ -1,4 +1,5 @@
 import re
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Iterable, Union
 from logging import getLogger
@@ -129,8 +130,6 @@ def _run_command_impl(
 
         context = session.load_context()
 
-        breakpoint()
-
         session.run(
             pipeline_name=pipeline,
             tags=tags,
@@ -237,15 +236,62 @@ def init(env: str, force: bool, silent: bool):
                 )
             )
 
+def publish_image(image: str, tag: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
+    """Build and push the Docker image.
+    
+    Args:
+        image: The image name (without tag)
+        tag: The image tag
+        project_path: Path to the project root
+        platform: Target platform for the image
+        context: Docker build context directory (relative to project_path or absolute)
+        
+    Returns:
+        The full image name with tag
+    """
+    full_image = f"{image}:{tag}"
+    
+    LOGGER.info(f"Building Docker image: {full_image}")
+    
+    # Build the image
+    build_cmd = [
+        "docker", "buildx", "build",
+        "--progress=plain",
+        "--platform", platform,
+        "-t", image,
+        "--load",
+        context
+    ]
+    
+    LOGGER.info(f"Running: {' '.join(build_cmd)}")
+    result = subprocess.run(build_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker build failed with exit code {result.returncode}")
+    
+    # Tag the image
+    tag_cmd = ["docker", "tag", image, full_image]
+    LOGGER.info(f"Running: {' '.join(tag_cmd)}")
+    result = subprocess.run(tag_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker tag failed with exit code {result.returncode}")
+    
+    # Push the image
+    push_cmd = ["docker", "push", full_image]
+    LOGGER.info(f"Running: {' '.join(push_cmd)}")
+    result = subprocess.run(push_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker push failed with exit code {result.returncode}")
+    
+    click.secho(f"Successfully published image: {full_image}", fg="green")
+    return full_image
+
 @argo_commands.command(name="submit")
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--environment", "-e", type=str, default="base", help="Kedro environment to execute in")
-@click.option("--image", type=str, required=True, help="Image to execute")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.pass_obj
 def submit(
     ctx,
     pipeline: str,
-    image: str,
     environment: str
 ):
     """Submit the pipeline to Argo."""
@@ -264,6 +310,16 @@ def submit(
         env=environment,
     ) as session:
         context = session.load_context()
+        
+        # Build and push the image
+        image = publish_image(
+            image=context.argo.deployment.image,
+            tag=context.argo.deployment.tag,
+            project_path=project_path,
+            platform=context.argo.deployment.target_platform,
+            context=context.argo.deployment.context,
+        )
+        
         pipeline_tasks = get_argo_dag(
             kedro_pipelines[pipeline], 
             machine_types=context.argo.machine_types,
