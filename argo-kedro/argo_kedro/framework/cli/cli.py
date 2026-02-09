@@ -129,6 +129,8 @@ def _run_command_impl(
 
         context = session.load_context()
 
+        breakpoint()
+
         session.run(
             pipeline_name=pipeline,
             tags=tags,
