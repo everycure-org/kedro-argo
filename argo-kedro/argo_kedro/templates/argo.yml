@@ -1,5 +1,7 @@
 namespace: argo-workflows # cluster namespace to run on
 
+# To enable running on the cluster, Argo requires the plugin to be packaged
+# as a Docker image. This section defines the image to use.
 deployment:
   image: your-registry/your-image  # Docker image to use for workflow execution
   tag: latest  # Image tag
