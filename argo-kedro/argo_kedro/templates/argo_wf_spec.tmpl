@@ -18,6 +18,9 @@ spec:
       parameters:
       - name: pipeline
       - name: kedro_nodes
+      - name: mem
+      - name: cpu
+      - name: num_gpu
     podSpecPatch: |
       containers:
         - name: main

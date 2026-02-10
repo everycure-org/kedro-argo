@@ -1,4 +1,5 @@
 import re
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Iterable, Union
 from logging import getLogger
@@ -8,69 +9,79 @@ import yaml
 from kubernetes import config
 from kubernetes.dynamic import DynamicClient
 from jinja2 import Environment, FileSystemLoader
-from kedro.framework.cli.utils import CONTEXT_SETTINGS, KedroCliError
-from kedro.framework.project import pipelines, settings
+from kedro.framework.cli.utils import CONTEXT_SETTINGS
+from kedro.framework.project import settings
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
 from kedro.utils import find_kedro_project, is_kedro_project
-from kedro.framework.cli.project import (
-    ASYNC_ARG_HELP,
-    CONF_SOURCE_HELP,
-    FROM_INPUTS_HELP,
-    FROM_NODES_HELP,
-    LOAD_VERSION_HELP,
-    NODE_ARG_HELP,
-    PARAMS_ARG_HELP,
-    PIPELINE_ARG_HELP,
-    RUNNER_ARG_HELP,
-    TAG_ARG_HELP,
-    TO_NODES_HELP,
-    TO_OUTPUTS_HELP,
-    project_group,
-)
+from kedro.framework.cli.project import TAG_ARG_HELP
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
-from kedro.pipeline.node import Node
-from kedro.runner.sequential_runner import SequentialRunner
 from argo_kedro.runners.fuse_runner import FusedRunner
 from argo_kedro.framework.hooks.argo_hook import MachineType
-from argo_kedro.pipeline.node import ArgoNode
+from argo_kedro.pipeline.node import Node
 
 LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
 def render_jinja_template(
-    src: Union[str, Path], **kwargs
+    src: Union[str, Path],
+    trim_blocks: bool = False,
+    lstrip_blocks: bool = False,
+    keep_trailing_newline: bool = True,
+    **kwargs
 ) -> str:
-    """This functions enable to copy a file and render the
-    tags (identified by {{ my_tag }}) with the values provided in kwargs.
+    """Render a Jinja2 template file with the provided values.
 
-    Arguments:
-        src {Union[str, Path]} -- The path to the template which should be rendered
+    Args:
+        src: The path to the template file to render
+        trim_blocks: If True, remove the first newline after a block
+        lstrip_blocks: If True, strip leading spaces and tabs from the start of a line
+        keep_trailing_newline: If True, preserve trailing newlines
+        **kwargs: Variables to pass to the template for rendering
 
     Returns:
-        str -- A string that contains all the files with replaced tags.
+        A string containing the rendered template with replaced tags.
     """
     src = Path(src)
     template_loader = FileSystemLoader(searchpath=src.parent.as_posix())
-    template_env = Environment(loader=template_loader, keep_trailing_newline=True)
+    template_env = Environment(
+        loader=template_loader,
+        trim_blocks=trim_blocks,
+        lstrip_blocks=lstrip_blocks,
+        keep_trailing_newline=keep_trailing_newline,
+    )
     template = template_env.get_template(src.name)
     return template.render(**kwargs)
 
 
 def write_jinja_template(
-    src: Union[str, Path], dst: Union[str, Path], **kwargs
+    src: Union[str, Path],
+    dst: Union[str, Path],
+    trim_blocks: bool = False,
+    lstrip_blocks: bool = False,
+    keep_trailing_newline: bool = True,
+    **kwargs
 ) -> None:
-    """Write a template file and replace tis jinja's tags
-     (identified by {{ my_tag }}) with the values provided in kwargs.
+    """Write a rendered Jinja2 template to a file.
 
-    Arguments:
-        src {Union[str, Path]} -- Path to the template which should be rendered
-        dst {Union[str, Path]} -- Path where the rendered template should be saved
+    Args:
+        src: Path to the template file to render
+        dst: Path where the rendered template should be saved
+        trim_blocks: If True, remove the first newline after a block
+        lstrip_blocks: If True, strip leading spaces and tabs from the start of a line
+        keep_trailing_newline: If True, preserve trailing newlines
+        **kwargs: Variables to pass to the template for rendering
     """
     dst = Path(dst)
-    parsed_template = render_jinja_template(src, **kwargs)
+    parsed_template = render_jinja_template(
+        src,
+        trim_blocks=trim_blocks,
+        lstrip_blocks=lstrip_blocks,
+        keep_trailing_newline=keep_trailing_newline,
+        **kwargs
+    )
     with open(dst, "w") as file_handler:
         file_handler.write(parsed_template)
 
@@ -128,10 +139,12 @@ def _run_command_impl(
         conf_source=conf_source,
     ) as session:
 
+        context = session.load_context()
+
         session.run(
             pipeline_name=pipeline,
             tags=tags,
-            runner=FusedRunner(pipeline_name=pipeline),
+            runner=FusedRunner(pipeline_name=pipeline, use_memory_datasets=context.argo.runner.use_memory_datasets),
             node_names=list(nodes) if nodes else None,
             from_nodes=list(from_nodes) if from_nodes else None,
             to_nodes=list(to_nodes) if to_nodes else None,
@@ -165,7 +178,7 @@ def commands():
 
 @commands.command(name="argo", cls=KedroClickGroup)
 def argo_commands():
-    """Use mlflow-specific commands inside kedro project."""
+    """Use argo-specific commands inside kedro project."""
     pass  # pragma: no cover
 
 @argo_commands.command()
@@ -202,8 +215,6 @@ def init(env: str, force: bool, silent: bool):
     project_metadata = bootstrap_project(project_path)
     argo_yml_path = project_path / settings.CONF_SOURCE / env / argo_yml
 
-    # mlflow.yml is just a static file,
-    # but the name of the experiment is set to be the same as the project
     if argo_yml_path.is_file() and not force:
         click.secho(
             click.style(
@@ -215,7 +226,6 @@ def init(env: str, force: bool, silent: bool):
         try:
             write_jinja_template(
                 src=ARGO_TEMPLATES_DIR_PATH / argo_yml,
-                is_cookiecutter=False,
                 dst=argo_yml_path,
                 python_package=project_metadata.package_name,
             )
@@ -234,33 +244,83 @@ def init(env: str, force: bool, silent: bool):
                 )
             )
 
+def publish_image(image: str, tag: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
+    """Build and push the Docker image.
+    
+    Args:
+        image: The image name (without tag)
+        tag: The image tag
+        project_path: Path to the project root
+        platform: Target platform for the image
+        context: Docker build context directory (relative to project_path or absolute)
+        
+    Returns:
+        The full image name with tag
+    """
+    full_image = f"{image}:{tag}"
+    
+    LOGGER.info(f"Building Docker image: {full_image}")
+    
+    # Build the image
+    build_cmd = [
+        "docker", "buildx", "build",
+        "--progress=plain",
+        "--platform", platform,
+        "-t", image,
+        "--load",
+        context
+    ]
+    
+    LOGGER.info(f"Running: {' '.join(build_cmd)}")
+    result = subprocess.run(build_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker build failed with exit code {result.returncode}")
+    
+    # Tag the image
+    tag_cmd = ["docker", "tag", image, full_image]
+    LOGGER.info(f"Running: {' '.join(tag_cmd)}")
+    result = subprocess.run(tag_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker tag failed with exit code {result.returncode}")
+    
+    # Push the image
+    push_cmd = ["docker", "push", full_image]
+    LOGGER.info(f"Running: {' '.join(push_cmd)}")
+    result = subprocess.run(push_cmd, cwd=project_path)
+    if result.returncode != 0:
+        raise click.ClickException(f"Docker push failed with exit code {result.returncode}")
+    
+    click.secho(f"Successfully published image: {full_image}", fg="green")
+    return full_image
+
 @argo_commands.command(name="submit")
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
-@click.option("--environment", "-e", type=str, default="base", help="Kedro environment to execute in")
-@click.option("--image", type=str, required=True, help="Image to execute")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.pass_obj
 def submit(
     ctx,
     pipeline: str,
-    image: str,
     environment: str
 ):
     """Submit the pipeline to Argo."""
-    LOGGER.info("Loading spec template..")
-
-    loader = FileSystemLoader(searchpath=ARGO_TEMPLATES_DIR_PATH)
-    template_env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    template = template_env.get_template("argo_wf_spec.tmpl")
-
-    LOGGER.info("Rendering Argo spec...")
-
     project_path = find_kedro_project(Path.cwd()) or Path.cwd()
     bootstrap_project(project_path)
+    
     with KedroSession.create(
         project_path=project_path,
         env=environment,
     ) as session:
         context = session.load_context()
+        
+        # Build and push the image
+        image = publish_image(
+            image=context.argo.deployment.image,
+            tag=context.argo.deployment.tag,
+            project_path=project_path,
+            platform=context.argo.deployment.target_platform,
+            context=context.argo.deployment.context,
+        )
+        
         pipeline_tasks = get_argo_dag(
             kedro_pipelines[pipeline], 
             machine_types=context.argo.machine_types,
@@ -268,7 +328,11 @@ def submit(
         )
 
         # Render the template
-        rendered_template = template.render(
+        LOGGER.info("Rendering Argo workflow spec...")
+        rendered_template = render_jinja_template(
+            src=ARGO_TEMPLATES_DIR_PATH / "argo_wf_spec.tmpl",
+            trim_blocks=True,
+            lstrip_blocks=True,
             pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
             pipeline_name=pipeline,
             image=image,
@@ -316,7 +380,7 @@ class ArgoTask:
     """Class to model an Argo task.
 
     Argo's operating model slightly differs from Kedro's, i.e., while Kedro uses dataset
-    dependecies to model relationships, Argo uses task dependencies."""
+    dependencies to model relationships, Argo uses task dependencies."""
 
     def __init__(self, node: Node, machine_type: MachineType):
         self._node = node
@@ -362,7 +426,7 @@ def get_argo_dag(
     for group in pipeline.grouped_nodes:
         for target_node in group:
             try:
-                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, ArgoNode) and target_node.machine_type is not None else machine_types[default_machine_type])
+                task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, Node) and target_node.machine_type is not None else machine_types[default_machine_type])
             except KeyError as e:
                 LOGGER.error(f"Machine type not found for node `{target_node.name}`")
                 raise KeyError(f"Machine type `{target_node.machine_type}` not found for node `{target_node.name}`")

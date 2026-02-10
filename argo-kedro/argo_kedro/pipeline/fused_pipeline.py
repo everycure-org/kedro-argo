@@ -1,16 +1,16 @@
 from typing import Iterable, List
 from kedro.pipeline import Pipeline
 from functools import cached_property
-from argo_kedro.pipeline.node import ArgoNode
-from kedro.pipeline.node import Node
+from argo_kedro.pipeline.node import Node
+from kedro.pipeline.node import Node as KedroNode
 
-class FusedNode(ArgoNode):
+class FusedNode(Node):
     """FusedNode is an extension of Kedro's internal node. The FusedNode
     wraps a set of nodes, and correctly sets it's `inputs` and `outputs`
     allowing it to act as a single unit for execution.
     """
 
-    def __init__(self, nodes: List[Node], name: str, machine_type: str | None = None):
+    def __init__(self, nodes: List[KedroNode], name: str, machine_type: str | None = None):
         self._nodes = nodes
         self._name = name
         self._namespace = None
@@ -48,7 +48,7 @@ class FusedPipeline(Pipeline):
 
     def __init__(
         self,
-        nodes: Iterable[Node | Pipeline],
+        nodes: Iterable[KedroNode | Pipeline],
         name: str,
         *,
         tags: str | Iterable[str] | None = None,
@@ -59,5 +59,5 @@ class FusedPipeline(Pipeline):
         super().__init__(nodes, tags=tags)
 
     @property
-    def nodes(self) -> list[Node]:
+    def nodes(self) -> list[KedroNode]:
         return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]

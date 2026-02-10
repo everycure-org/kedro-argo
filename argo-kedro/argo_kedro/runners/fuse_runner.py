@@ -36,6 +36,7 @@ class FusedRunner(SequentialRunner):
         self,
         is_async: bool = False,
         pipeline_name: str | None = None,
+        use_memory_datasets: bool = False,
     ):
         """Instantiates the runner class.
 
@@ -50,6 +51,7 @@ class FusedRunner(SequentialRunner):
         """
         self._is_async = is_async
         self._pipeline_name = pipeline_name
+        self._use_memory_datasets = use_memory_datasets
 
     def _run(
         self,
@@ -62,26 +64,27 @@ class FusedRunner(SequentialRunner):
 
         LOGGER.warning(f"Running pipeline: {self._pipeline_name}")
 
-        for node in nodes:
-            if isinstance(node, FusedNode):
-                pipeline = Pipeline(node._nodes)
+        if use_memory_datasets:
+            for node in nodes:
+                if isinstance(node, FusedNode):
+                    pipeline = Pipeline(node._nodes)
 
-                outputs = pipeline.outputs()
-                for dataset in pipeline.datasets():
+                    outputs = pipeline.outputs()
+                    for dataset in pipeline.datasets():
 
-                    found = False
-                    for pipeline_node in pipelines[self._pipeline_name].nodes:
-                        if node.name != pipeline_node.name:
-                            if dataset in pipeline_node.inputs:
-                                found = True
-                                break
+                        found = False
+                        for pipeline_node in pipelines[self._pipeline_name].nodes:
+                            if node.name != pipeline_node.name:
+                                if dataset in pipeline_node.inputs:
+                                    found = True
+                                    break
 
-                    if found:
-                        print(f"{dataset} found as input to other pipeline node")
-                        outputs.append(dataset)
+                        if found:
+                            print(f"{dataset} found as input to other pipeline node")
+                            outputs.append(dataset)
 
-                for dataset in pipeline.datasets().difference(pipeline.inputs().union(outputs)):
-                    catalog._datasets[dataset] = MemoryDataset()
+                    for dataset in pipeline.datasets().difference(pipeline.inputs().union(outputs)):
+                        catalog._datasets[dataset] = MemoryDataset()
 
         # Invoke super runner
         super()._run(

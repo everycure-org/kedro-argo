@@ -1,13 +1,23 @@
-namespace: argo-workflows
+namespace: argo-workflows # cluster namespace to run on
+
+# To enable running on the cluster, Argo requires the plugin to be packaged
+# as a Docker image. This section defines the image to use.
+deployment:
+  image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse
+  tag: latest
+  context: ../
+
+runner:
+  # Flag to indicate that memory datasets should be
+  # used within the fused pipeline boundary, essentially
+  # indicating that catalog entries are removed, and datasets
+  # are passed in-memory as a result.
+  use_memory_datasets: false
 
 machine_types:
-  n1-standard-4:
+  default:
     mem: 16
     cpu: 4
     num_gpu: 0
-  n1-standard-8:
-    mem: 16
-    cpu: 8
-    num_gpu: 0
 
-default_machine_type: n1-standard-4
+default_machine_type: default

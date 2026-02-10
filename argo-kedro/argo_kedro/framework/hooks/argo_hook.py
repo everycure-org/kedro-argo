@@ -18,15 +18,27 @@ from omegaconf import OmegaConf
 
 from pydantic import BaseModel
 
+
+class RunnerConfig(BaseModel):
+    use_memory_datasets: bool = False
+
 class MachineType(BaseModel):
     mem: int
     cpu: int
     num_gpu: int
 
+class DeploymentConfig(BaseModel):
+    image: str
+    tag: str = "latest"
+    target_platform: str = "linux/amd64"
+    context: str = "./"
+
 class ArgoConfig(BaseModel):
     namespace: str
+    deployment: DeploymentConfig
     machine_types: dict[str, MachineType]
     default_machine_type: str
+    runner: RunnerConfig
 
 
 class ArgoHook:

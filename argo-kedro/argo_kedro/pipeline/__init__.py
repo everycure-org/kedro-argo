@@ -1,4 +1,4 @@
 from .fused_pipeline import FusedPipeline
-from .node import ArgoNode
+from .node import Node
 
-__all__ = ["FusedPipeline", "ArgoNode"]
+__all__ = ["FusedPipeline", "Node"]

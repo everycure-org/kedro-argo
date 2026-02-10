@@ -1,7 +1,7 @@
-from kedro.pipeline import Node
+from kedro.pipeline import Node as KedroNode
 from typing import Callable, Iterable
 
-class ArgoNode(Node):
+class Node(KedroNode):
     """ArgoNode is an extension of the Kedro node class, aimed at allowing
     the node to be allocated to a specific machine type.
     """

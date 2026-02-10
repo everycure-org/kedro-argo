@@ -31,6 +31,8 @@ Next, initialise the plugin, this will create a `argo.yml` file that will house 
 uv run kedro argo init
 ```
 
+Validate the file, and make any changes required.
+
 ## Setting up your cloud environment
 
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
@@ -80,7 +82,7 @@ paths:
 
 Finally, ensure the parametrized path is used, for example:
 
-```
+```yaml
 preprocessed_companies:
   type: pandas.ParquetDataset
   # This ensures that local storage is used in the base, while cloud storage
@@ -149,27 +151,6 @@ Add a `.dockerignore` file with the contents below to avoid constant re-uploadin
 ```
 
 ### Execute pipeline
-
-Finally, build and push the image to the `ai-platform-registry` so the cluster has permissions to access the container. Add the following `Makefile` to the repository. Replace `your-project-name` with the name of your project.
-
-``` 
-docker_image = us-central1-docker.pkg.dev/ec-ai-platform-dev/ai-platform-images/your-project-name
-TAG = latest
-TARGET_PLATFORM ?= linux/amd64
-
-docker_auth:
-	gcloud auth configure-docker us-central1-docker.pkg.dev
-
-docker_build:
-	docker buildx build --progress=plain --platform $(TARGET_PLATFORM) -t $(docker_image) --load ./ && \
-	docker tag $(docker_image) $(docker_image):${TAG}
-
-docker_push: docker_auth docker_build
-	docker push $(docker_image):${TAG}
-
-submit: docker_push
-	uv run kedro argo submit --image $(docker_image) --environment cloud
-```
 
 Run the following command to run on the cluster:
 
