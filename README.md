@@ -13,8 +13,7 @@ kedro new
 ## Set up your venv
 
 ```bash
-uv venv
-uv pip install -r requirements.txt
+uv sync
 ```
 
 ## Install the plugin
