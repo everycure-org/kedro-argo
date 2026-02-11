@@ -25,13 +25,13 @@ uv add argo-kedro
 
 ## Initialize the plugin
 
-Next, initialise the plugin, this will create a `argo.yml` file that will house components of the argo configuration.
+Next, initialise the plugin, this will create a `argo.yml` file that will house components of the argo configuration. Moreover, the plugin will prompt for the creation of baseline `Dockerfile` and `.dockerignore` files.
 
 ```bash
 uv run kedro argo init
 ```
 
-Validate the file, and make any changes required.
+Validate the files, and make any changes required.
 
 ## Setting up your cloud environment
 
@@ -46,6 +46,9 @@ uv add fsspec[gcs]
 Kedro allows customizing variables based on the environment, which unlocks local data storage for testing, while leveraging Cloud Storage for running on the cluster. First, enable the use of the globals in the `settings.py` file. To do so, replace the `CONFIG_LOADER_ARGS` setting with the contents below:
 
 ```python
+# Add the following import on top of the file
+from omegaconf.resolvers import oc
+
 CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
@@ -59,6 +62,9 @@ CONFIG_LOADER_ARGS = {
             "**/parameters*/**",
         ],
     },
+    "custom_resolvers": {
+        "oc.env": oc.env,
+    }
 }
 ```
 
@@ -74,10 +80,13 @@ paths:
 
 Next, define the globals file for the cloud environment.
 
+> The plugin adds a few environment variables to the container automatically, one of these is the `WORKFLOW_ID` which
+> is a unique identifier of the workflow. This can be used as a unit of versioning as displayed below.
+
 ```yaml
 # Definition for base/globals.yml for local storage
 paths:
-	base: gs://ai-platform-dev-everycure-storage/<your_project_name>
+	base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID}
 ```
 
 Finally, ensure the parametrized path is used, for example:
@@ -103,44 +112,6 @@ gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region u
 ### Ensure all catalog entries are registered
 
 This is a very early version of the plugin, which does _not_ support memory datasets. Ensure your pipeline does not use memory datasets, as this will lead to failures. We will be introducing a mechanism that will support this in the future.
-
-### Ensure you have a Dockerfile
-
-The Dockerfile bundles all dependencies you need for running on the cluster. An example Dockerfile can be found below.
-
-```Dockerfile
-ARG IMAGE=ubuntu:24.04
-FROM $IMAGE AS build
-
-ENV UV_LINK_MODE=copy
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl && \
-    update-ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-ENV UV_LINK_MODE=copy
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
-
-COPY --from=ghcr.io/astral-sh/uv:0.6.9 /uv /uvx /bin/
-
-COPY pyproject.toml .
-COPY uv.lock .
-RUN uv sync --frozen --no-install-project
-ENV PATH=/app/.venv/bin:$PATH
-
-COPY . .
-
-RUN uv sync --frozen
-```
 
 ### Create .dockerignore
 

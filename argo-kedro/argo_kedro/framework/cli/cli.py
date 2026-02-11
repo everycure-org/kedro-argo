@@ -298,6 +298,44 @@ def init(env: str, force: bool, silent: bool):
                         fg="red",
                     )
                 )
+    
+    # Prompt user about .dockerignore
+    dockerignore_path = project_path / ".dockerignore"
+    if dockerignore_path.is_file() and not force:
+        if not silent:
+            click.secho(
+                click.style(
+                    f"A '.dockerignore' already exists at '{dockerignore_path}'. You can use the ``--force`` option to override it.",
+                    fg="yellow",
+                )
+            )
+    else:
+        if force or click.confirm("Do you want to add a .dockerignore to the project root?"):
+            try:
+                dockerignore_template_path = ARGO_TEMPLATES_DIR_PATH / ".dockerignore"
+                if dockerignore_template_path.is_file():
+                    copy_file(dockerignore_template_path, dockerignore_path)
+                    if not silent:
+                        click.secho(
+                            click.style(
+                                f"'.dockerignore' successfully added to project root.",
+                                fg="green",
+                            )
+                        )
+                else:
+                    click.secho(
+                        click.style(
+                            f".dockerignore template not found at '{dockerignore_template_path}'.",
+                            fg="red",
+                        )
+                    )
+            except Exception as e:
+                click.secho(
+                    click.style(
+                        f"Error creating .dockerignore: {str(e)}",
+                        fg="red",
+                    )
+                )
 
 def publish_image(image: str, tag: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
     """Build and push the Docker image.
