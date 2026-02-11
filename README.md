@@ -101,6 +101,8 @@ preprocessed_companies:
   filepath: ${globals:paths.base}/02_intermediate/preprocessed_companies.parquet
 ```
 
+> **IMPORTANT**: Make sure you replace `data/` string in the `conf/base/catalog.yml` file with `${globals:paths.base}/` as kedro isn't aware of the Cloud storage. This change would allow Kedro to switch between `local` and `cloud` env easily.
+
 ## Submitting to the cluster
 
 ### Ensure you have the correct kubeconfig set
