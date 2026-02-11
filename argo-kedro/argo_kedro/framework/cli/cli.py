@@ -86,6 +86,23 @@ def write_jinja_template(
         file_handler.write(parsed_template)
 
 
+def copy_file(src: Union[str, Path], dst: Union[str, Path]) -> None:
+    """Copy a file from source to destination.
+
+    Args:
+        src: Path to the source file to copy
+        dst: Path where the file should be copied to
+    """
+    src = Path(src)
+    dst = Path(dst)
+    
+    with open(src, "r") as src_file:
+        content = src_file.read()
+    
+    with open(dst, "w") as dst_file:
+        dst_file.write(content)
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
@@ -243,6 +260,44 @@ def init(env: str, force: bool, silent: bool):
                     fg="red",
                 )
             )
+    
+    # Prompt user about Dockerfile
+    dockerfile_path = project_path / "Dockerfile"
+    if dockerfile_path.is_file() and not force:
+        if not silent:
+            click.secho(
+                click.style(
+                    f"A 'Dockerfile' already exists at '{dockerfile_path}'. You can use the ``--force`` option to override it.",
+                    fg="yellow",
+                )
+            )
+    else:
+        if force or click.confirm("Do you want to add a Dockerfile to the project root?"):
+            try:
+                dockerfile_template_path = ARGO_TEMPLATES_DIR_PATH / "Dockerfile"
+                if dockerfile_template_path.is_file():
+                    copy_file(dockerfile_template_path, dockerfile_path)
+                    if not silent:
+                        click.secho(
+                            click.style(
+                                f"'Dockerfile' successfully added to project root.",
+                                fg="green",
+                            )
+                        )
+                else:
+                    click.secho(
+                        click.style(
+                            f"Dockerfile template not found at '{dockerfile_template_path}'.",
+                            fg="red",
+                        )
+                    )
+            except Exception as e:
+                click.secho(
+                    click.style(
+                        f"Error creating Dockerfile: {str(e)}",
+                        fg="red",
+                    )
+                )
 
 def publish_image(image: str, tag: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
     """Build and push the Docker image.

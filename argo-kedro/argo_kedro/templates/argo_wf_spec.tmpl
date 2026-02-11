@@ -44,6 +44,11 @@ spec:
       image: {{ image }}
       command: ["kedro"]
       imagePullPolicy: Always
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
       args:
       - "run"
       - "--pipeline"
