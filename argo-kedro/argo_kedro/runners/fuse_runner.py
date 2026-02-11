@@ -64,7 +64,7 @@ class FusedRunner(SequentialRunner):
 
         LOGGER.warning(f"Running pipeline: {self._pipeline_name}")
 
-        if use_memory_datasets:
+        if self._use_memory_datasets:
             for node in nodes:
                 if isinstance(node, FusedNode):
                     pipeline = Pipeline(node._nodes)
