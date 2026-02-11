@@ -86,7 +86,7 @@ Next, define the globals file for the cloud environment.
 ```yaml
 # Definition for base/globals.yml for local storage
 paths:
-	base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID}
+	base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID, dummy}
 ```
 
 Finally, ensure the parametrized path is used, for example:

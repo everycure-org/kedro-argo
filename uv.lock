@@ -131,7 +131,7 @@ wheels = [
 
 [[package]]
 name = "argo-kedro"
-version = "0.1.7"
+version = "0.1.12"
 source = { editable = "argo-kedro" }
 dependencies = [
     { name = "jinja2" },
