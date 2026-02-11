@@ -116,7 +116,6 @@ gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region u
 
 This is a very early version of the plugin, which does _not_ support memory datasets. Ensure your pipeline does not use memory datasets, as this will lead to failures. We will be introducing a mechanism that will support this in the future.
 
-
 ### Execute pipeline
 
 Run the following command to run on the cluster:
@@ -124,6 +123,46 @@ Run the following command to run on the cluster:
 ```
 uv run kedro argo submit
 ```
+
+## Configuring machines types
+
+The `argo.yml` file defines the possible machine typess that can be used by nodes in the pipeline, the platform team will share a list of valid machine types.
+
+
+```yaml
+# ...
+# argo.yml
+
+machine_types:
+  default:
+    mem: 16
+    cpu: 4
+    num_gpu: 0
+
+default_machine_type: default
+```
+
+By default, the `default_machine_type` is used for all nodes of the pipeline, if you wish to configure the machine type, import the plugin's `Node` extension.
+
+```python
+# NOTE: Import from the plugin, this is a drop in replacement!
+from argo_kedro.pipeline import Node
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        [
+            Node(
+                func=preprocess_companies,
+                inputs="companies",
+                outputs="preprocessed_companies",
+                name="preprocess_companies_node",
+                machine_type="n1-standard-4", # NOTE: enter a valid machine type from the configuration here
+            ),
+            ...
+         ]
+    )
+```
+
 
 # Common errors
 
