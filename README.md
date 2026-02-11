@@ -113,13 +113,6 @@ gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region u
 
 This is a very early version of the plugin, which does _not_ support memory datasets. Ensure your pipeline does not use memory datasets, as this will lead to failures. We will be introducing a mechanism that will support this in the future.
 
-### Create .dockerignore
-
-Add a `.dockerignore` file with the contents below to avoid constant re-uploading of your venv.
-
-```
-.venv
-```
 
 ### Execute pipeline
 
