@@ -38,7 +38,7 @@ Validate the files, and make any changes required.
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
 
 ```bash
-uv add fsspec[gcs]
+uv add "fsspec[gcs]"
 ```
 
 ### Registering the globals file
@@ -70,26 +70,28 @@ CONFIG_LOADER_ARGS = {
 
 ### Parametrizing the base path
 
-Start by defining the globals file for the base environment.
+Create a new file in `conf/base` folder called `globals.yml`. Start by defining the globals file for the base environment.
 
 ```yaml
-# Definition for base/globals.yml for local storage
+# Definition for conf/base/globals.yml for local storage
 paths:
-	base: data
+    base: data
 ```
 
-Next, define the globals file for the cloud environment.
+Next, create the `globals.yml` file for the cloud env in `conf/cloud` folder (if the folder doesn't exist, please create it), then define the globals file for the cloud environment with the following:
+
+```yaml
+# Definition for conf/cloud/globals.yml for cloud storage
+paths:
+    base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID, dummy}
+```
+
+> **Important** Ensure to replace **<your_project_name>** with your project name.
 
 > The plugin adds a few environment variables to the container automatically, one of these is the `WORKFLOW_ID` which
 > is a unique identifier of the workflow. This can be used as a unit of versioning as displayed below.
 
-```yaml
-# Definition for base/globals.yml for local storage
-paths:
-	base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID, dummy}
-```
-
-Finally, ensure the parametrized path is used, for example:
+Finally, ensure the parametrized path is used, this should be done in the `conf/base/catalog.yml` file. For example:
 
 ```yaml
 preprocessed_companies:
@@ -119,7 +121,7 @@ This is a very early version of the plugin, which does _not_ support memory data
 Run the following command to run on the cluster:
 
 ```
-make submit
+uv run kedro argo submit
 ```
 
 # Common errors

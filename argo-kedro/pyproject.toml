@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "argo-kedro"
-version = "0.1.14"
+version = "0.1.15"
 description = "Kedro plugin for running pipelines on Argo Workflows"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,7 +24,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Framework :: Kedro",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
