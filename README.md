@@ -132,3 +132,19 @@ Occasionally, the combination of the `fsspec[gcs]` and `kubernetes` dependencies
 proto-plus==1.24.0.dev1
 ```
 
+## Dataset saving errors
+
+The Google Cloud filesystem implementation sometimes seems to result in some issues with Kedro. Resulting in `VersionedDataset` errors, even when versioning is disabled.
+
+```
+DatasetError: Cannot save versioned dataset '...' to 
+'...' because a file with 
+the same name already exists in the directory. This is likely because versioning
+was enabled on a dataset already saved previously.
+```
+
+To fix the issue, pin the version of the following library:
+
+```
+gcsfs==2024.3.1
+```
