@@ -18,7 +18,7 @@ from kedro.framework.cli.project import TAG_ARG_HELP
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from argo_kedro.runners.fuse_runner import FusedRunner
-from argo_kedro.framework.hooks.argo_hook import MachineType
+from argo_kedro.framework.hooks.argo_hook import MachineType, TemplateConfig
 from argo_kedro.pipeline.node import Node
 
 LOGGER = getLogger(__name__)
@@ -420,7 +420,7 @@ def submit(
             trim_blocks=True,
             lstrip_blocks=True,
             pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
-            template=context.argo.template,
+            template=context.argo.template if context.argo.template else TemplateConfig(),
             pipeline_name=pipeline,
             image=image,
             namespace=context.argo.namespace,

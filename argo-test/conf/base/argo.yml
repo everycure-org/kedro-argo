@@ -65,9 +65,9 @@ template:
 
   # Section allows for including environment variables in the
   # node for execution, currently limited to secret references.
-  environment:
-    - name: OPENAI_API_TOKEN
-      secret_ref:
-        name: matrix_secrets
-        key: OPENAI_API_KEY
+  # environment:
+  #   - name: OPENAI_API_TOKEN
+  #     secret_ref:
+  #       name: matrix_secrets
+  #       key: OPENAI_API_KEY
 
