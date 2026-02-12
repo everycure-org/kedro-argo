@@ -10,6 +10,7 @@ def machine_types() -> dict[str, MachineType]:
         "default": MachineType(mem=16, cpu=2, num_gpu=0),
         "n1-standard-4": MachineType(mem=16, cpu=4, num_gpu=0),
         "n1-standard-8": MachineType(mem=16, cpu=8, num_gpu=0),
+        "gpu-node": MachineType(mem=32, cpu=8, num_gpu=1),
     }
 
 @pytest.fixture
@@ -203,4 +204,49 @@ def test_get_argo_dag_fused_complex(fused_pipeline_complex: Pipeline, machine_ty
 
     # Assert resulting argo dag is correct
     assert {key: task.to_dict() for key,task in argo_dag.items()} == expected
+
+
+def test_get_argo_dag_gpu(machine_types: dict[str, MachineType], default_machine_type: str):
+    """Test that tasks with num_gpu > 0 get the kedro-gpu template."""
+    pipeline = Pipeline(
+        [
+            Node(
+                func=lambda x: x,
+                inputs="raw_data",
+                outputs="data",
+                tags=["preprocessing"],
+                name="preprocess_fun",
+            ),
+            Node(
+                func=lambda x: x,
+                inputs="data",
+                outputs="model",
+                tags=["training"],
+                name="train_fun",
+                machine_type="gpu-node",
+            ),
+        ]
+    )
+
+    argo_dag = get_argo_dag(pipeline, machine_types, default_machine_type)
+    expected = {
+        "preprocess_fun": {
+            "name": "preprocess-fun",
+            "nodes": "preprocess_fun",
+            "deps": [],
+            "mem": 16,
+            "cpu": 2,
+            "num_gpu": 0,
+        },
+        "train_fun": {
+            "name": "train-fun",
+            "nodes": "train_fun",
+            "deps": ["preprocess-fun"],
+            "mem": 32,
+            "cpu": 8,
+            "num_gpu": 1,
+        }
+    }
+
+    assert {key: task.to_dict() for key, task in argo_dag.items()} == expected
     
