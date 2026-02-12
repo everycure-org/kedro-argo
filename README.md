@@ -36,6 +36,8 @@ Validate the files, and make any changes required.
 
 Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
 
+> NOTE: The split between the `base` and `cloud` environment enables development workflows where local data storage is used when iterating locally, while the cluster uses Google Cloud storage.
+
 ```bash
 uv add "fsspec[gcs]"
 ```
@@ -163,6 +165,53 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 ```
 
+## Fusing nodes for execution
+
+By default, the resulting Argo Workflow runs each node on a dedicated machine. Often we would like to co-locate multiple nodes for execution on the same machine, this is where the `FusePipeline` comes in.
+
+The `FusePipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
+
+```python
+from kedro.pipeline import Pipeline
+from argo_kedro.pipeline import FusedPipeline, Node
+
+from .nodes import create_model_input_table, preprocess_companies, preprocess_shuttles
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        [
+            FusedPipeline(
+                nodes=[
+                    Node(
+                        func=preprocess_companies,
+                        inputs="companies",
+                        outputs="preprocessed_companies",
+                        name="preprocess_companies_node",
+                    ),
+                    Node(
+                        func=preprocess_shuttles,
+                        inputs="shuttles",
+                        outputs="preprocessed_shuttles",
+                        name="preprocess_shuttles_node",
+                    ),
+                ],
+                name="preprocess_data_fused",
+                machine_type="n1-standard-1"
+            ),
+            Node(
+                func=create_model_input_table,
+                inputs=["preprocessed_shuttles", "preprocessed_companies", "reviews"],
+                outputs="model_input_table",
+                name="create_model_input_table_node",
+            ),
+        ]
+    )
+```
+
+The code snippet above wraps the `preprocess_companies_node` and `preprocess_shuttles_node` nodes together for execution on the same machine. Similar to the plugins' `Node` object, the `FusedPipeline` accepts a `machine_type` argument that allows for customizing the machine type to use.
+
+> Given that the nodes within the `FusedPipeline` now execute on the same machine, the plugin performs a small optimization step to reduce IO. Specifically, each intermediate, i,.e., non-output dataset within the `FusedPipeline` is transformed into a `MemoryDataset`. This allows for Kedro to keep these datasets in memory, without having to materialize them to disk.
 
 # Common errors
 
