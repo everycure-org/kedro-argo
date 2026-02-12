@@ -1,0 +1,62 @@
+name: Check Version Bump
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Get version from pyproject.toml
+      id: local
+      working-directory: argo-kedro
+      run: |
+        version=$(python -c "
+        import tomllib
+        with open('pyproject.toml', 'rb') as f:
+            data = tomllib.load(f)
+        print(data['project']['version'])
+        ")
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "Local version: $version"
+
+    - name: Get latest version from PyPI
+      id: pypi
+      run: |
+        version=$(python -c "
+        import urllib.request, json
+        try:
+            resp = urllib.request.urlopen('https://pypi.org/pypi/argo-kedro/json')
+            data = json.loads(resp.read())
+            print(data['info']['version'])
+        except Exception:
+            print('0.0.0')
+        ")
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "PyPI version: $version"
+
+    - name: Compare versions
+      run: |
+        pip install packaging
+        python -c "
+        from packaging.version import Version
+        local = Version('${{ steps.local.outputs.version }}')
+        pypi = Version('${{ steps.pypi.outputs.version }}')
+        print(f'Local: {local}')
+        print(f'PyPI:  {pypi}')
+        if local <= pypi:
+            raise SystemExit(
+                f'Version in pyproject.toml ({local}) must be greater than '
+                f'the current PyPI version ({pypi}). Please bump the version.'
+            )
+        print(f'Version bump OK: {pypi} -> {local}')
+        "
