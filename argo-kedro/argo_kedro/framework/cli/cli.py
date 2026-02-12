@@ -427,7 +427,7 @@ def submit(
             environment=environment
         )
 
-        # # Load as yaml
+        # Load as yaml
         yaml_data = yaml.safe_load(rendered_template)
         yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
         save_argo_template(
