@@ -427,6 +427,7 @@ def submit(
             trim_blocks=True,
             lstrip_blocks=True,
             pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
+            template=[context.argo.template]
             pipeline_name=pipeline,
             image=image,
             namespace=context.argo.namespace,

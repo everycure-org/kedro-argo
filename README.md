@@ -211,7 +211,34 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 The code snippet above wraps the `preprocess_companies_node` and `preprocess_shuttles_node` nodes together for execution on the same machine. Similar to the plugins' `Node` object, the `FusedPipeline` accepts a `machine_type` argument that allows for customizing the machine type to use.
 
-> Given that the nodes within the `FusedPipeline` now execute on the same machine, the plugin performs a small optimization step to reduce IO. Specifically, each intermediate, i,.e., non-output dataset within the `FusedPipeline` is transformed into a `MemoryDataset`. This allows for Kedro to keep these datasets in memory, without having to materialize them to disk.
+> Given that the nodes within the `FusedPipeline` now execute on the same machine, the plugin performs a small optimization step to reduce IO. Specifically, each intermediate, i,.e., non-output dataset within the `FusedPipeline` is transformed into a `MemoryDataset`. This allows for Kedro to keep these datasets in memory, without having to materialize them to disk. The behaviour can be toggled by `runner.use_memory_datasets` in `argo.yml`.
+
+## Using cluster Secrets
+
+Workflows are allowed to consuming secrets provided by the cluster. Secrets can be mounted using the `template` section of the `argo.yml` file.
+
+```yaml
+# argo.yml
+
+...
+
+template:
+  environment:
+    # The configuration below mounts the `matrix_secrets.OPENAI_API_KEY` 
+    # to the `OPENAI_API_TOKEN` environment variable.
+    - name: OPENAI_API_TOKEN
+      secret_ref:
+        name: matrix_secrets
+        key: OPENAI_API_KEY
+```
+
+This ensures that the underlying machine has access to the secret, next use the `oc.env` resolver to pull the secret in the globals, catalog or parameters, as follows:
+
+```yml
+# base/globals.yml
+
+openai_token: ${oc.env:OPENAI_API_TOKEN}
+```
 
 # Common errors
 

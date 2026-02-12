@@ -49,6 +49,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        {% for env in template.environment %}
+         - name: {{ env.name }}
+           valueFrom:
+            secretKeyRef:
+              name: {{ env.secret_ref.name }}
+              key: {{ env.secret_ref.key }}
+        {% endfor %}
       args:
       - "run"
       - "--pipeline"
