@@ -65,6 +65,7 @@ template:
 
   # Section allows for including environment variables in the
   # node for execution, currently limited to secret references.
+  # https://argo-workflows.readthedocs.io/en/latest/walk-through/secrets/
   # environment:
   #   - name: OPENAI_API_TOKEN
   #     secret_ref:
