@@ -507,6 +507,7 @@ def get_argo_dag(
     """
     tasks = {}
 
+
     # The `grouped_nodes` property returns the nodes list, in a toplogical order,
     # allowing us to easily translate the Kedro DAG to an Argo WF.
     for group in pipeline.grouped_nodes:

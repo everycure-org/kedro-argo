@@ -37,6 +37,10 @@ class FusedNode(Node):
     def inputs(self) -> list[str]:
         return self._inputs # TODO: Remove transcoding?
 
+    @cached_property
+    def outputs(self) -> list[str]:
+        return self._outputs
+
 
 class FusedPipeline(Pipeline):
     """Fused pipeline allows for wrapping nodes for execution by the underlying
@@ -61,3 +65,12 @@ class FusedPipeline(Pipeline):
     @property
     def nodes(self) -> list[KedroNode]:
         return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]
+
+    @cached_property
+    def grouped_nodes(self) -> list[list[KedroNode]]:
+        """Return a list of the pipeline nodes in topologically ordered groups.
+        
+        For FusedPipeline, since we only have a single FusedNode, we return
+        it as a single group.
+        """
+        return [[FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]]
