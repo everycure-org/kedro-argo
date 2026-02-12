@@ -24,7 +24,6 @@ spec:
     podSpecPatch: |
       containers:
         - name: main
-        # Add tolerations for large memory nodes and GPU nodes
           resources:
             requests:
               memory: {% raw %} "{{inputs.parameters.mem}}Gi"
@@ -76,6 +75,13 @@ spec:
         {% for dep in task.deps %}
           - {{ dep }}
         {% endfor %}
+        {% endif %}
+        {% if task.num_gpu > 0 %}
+        podSpecPatch: |
+          tolerations:
+            - key: "nvidia.com/gpu"
+              value: "present"
+              effect: "NoSchedule"
         {% endif %}
         arguments:
           parameters:

@@ -23,6 +23,38 @@ machine_types:
     mem: 16
     cpu: 4
     num_gpu: 0
+  g2-standard-4:
+    mem: 16
+    cpu: 4
+    num_gpu: 1
+  g2-standard-8:
+    mem: 32
+    cpu: 8
+    num_gpu: 1
+  g2-standard-12:
+    mem: 48
+    cpu: 12
+    num_gpu: 1
+  g2-standard-16:
+    mem: 64
+    cpu: 16
+    num_gpu: 1
+  g2-standard-24:
+    mem: 96
+    cpu: 24
+    num_gpu: 2
+  g2-standard-32:
+    mem: 128
+    cpu: 32
+    num_gpu: 1
+  g2-standard-48:
+    mem: 192
+    cpu: 48
+    num_gpu: 4
+  g2-standard-96:
+    mem: 384
+    cpu: 96
+    num_gpu: 8
 
 # Default machine type to use when none specified
 default_machine_type: default
