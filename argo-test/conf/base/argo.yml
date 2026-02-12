@@ -3,17 +3,21 @@ namespace: argo-workflows # cluster namespace to run on
 # To enable running on the cluster, Argo requires the plugin to be packaged
 # as a Docker image. This section defines the image to use.
 deployment:
-  image: us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/fuse
-  tag: latest
-  context: ../
+  image: your-registry/your-image  # Docker image to use for workflow execution
+  tag: latest  # Image tag
+  target_platform: linux/amd64  # Target platform for the image
+  context: ./  # Docker build context directory (optional)
 
+# Configuration passed to the runner
 runner:
   # Flag to indicate that memory datasets should be
   # used within the fused pipeline boundary, essentially
   # indicating that catalog entries are removed, and datasets
   # are passed in-memory as a result.
-  use_memory_datasets: false
+  use_memory_datasets: true
 
+# Machine types available for use, the name of the `machine_type`
+# is used to assign resources to a Kedro node.
 machine_types:
   default:
     mem: 16
@@ -52,4 +56,19 @@ machine_types:
     cpu: 96
     num_gpu: 8
 
+# Default machine type to use when none specified
 default_machine_type: default
+
+# Section allows for customizing the Workflow
+# template sent to Argo
+template:
+
+  # Section allows for including environment variables in the
+  # node for execution, currently limited to secret references.
+  # https://argo-workflows.readthedocs.io/en/latest/walk-through/secrets/
+  # environment:
+  #   - name: OPENAI_API_TOKEN
+  #     secret_ref:
+  #       name: matrix_secrets
+  #       key: OPENAI_API_KEY
+

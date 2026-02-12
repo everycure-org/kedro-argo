@@ -8,6 +8,7 @@ deployment:
   target_platform: linux/amd64  # Target platform for the image
   context: ./  # Docker build context directory (optional)
 
+# Configuration passed to the runner
 runner:
   # Flag to indicate that memory datasets should be
   # used within the fused pipeline boundary, essentially
@@ -15,10 +16,26 @@ runner:
   # are passed in-memory as a result.
   use_memory_datasets: true
 
+# Machine types available for use, the name of the `machine_type`
+# is used to assign resources to a Kedro node.
 machine_types:
   default:
     mem: 16
     cpu: 4
     num_gpu: 0
 
+# Default machine type to use when none specified
 default_machine_type: default
+
+# Section allows for customizing the Workflow
+# template sent to Argo
+template:
+
+  # Section allows for including environment variables in the
+  # node for execution, currently limited to secret references.
+  environment:
+    - name: OPENAI_API_TOKEN
+      secret_ref:
+        name: matrix_secrets
+        key: OPENAI_API_KEY
+

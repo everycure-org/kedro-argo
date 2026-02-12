@@ -1,7 +1,7 @@
 import re
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Iterable, Union
+from typing import Any, Iterable, Union
 from logging import getLogger
 
 import click
@@ -18,7 +18,7 @@ from kedro.framework.cli.project import TAG_ARG_HELP
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from argo_kedro.runners.fuse_runner import FusedRunner
-from argo_kedro.framework.hooks.argo_hook import MachineType
+from argo_kedro.framework.hooks.argo_hook import MachineType, TemplateConfig
 from argo_kedro.pipeline.node import Node
 
 LOGGER = getLogger(__name__)
@@ -337,12 +337,11 @@ def init(env: str, force: bool, silent: bool):
                     )
                 )
 
-def publish_image(image: str, tag: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
+def publish_image(full_image: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
     """Build and push the Docker image.
     
     Args:
-        image: The image name (without tag)
-        tag: The image tag
+        full_image: The full image name with tag (e.g., "myimage:latest")
         project_path: Path to the project root
         platform: Target platform for the image
         context: Docker build context directory (relative to project_path or absolute)
@@ -350,8 +349,6 @@ def publish_image(image: str, tag: str, project_path: Path, platform: str = "lin
     Returns:
         The full image name with tag
     """
-    full_image = f"{image}:{tag}"
-    
     LOGGER.info(f"Building Docker image: {full_image}")
     
     # Build the image
@@ -359,7 +356,7 @@ def publish_image(image: str, tag: str, project_path: Path, platform: str = "lin
         "docker", "buildx", "build",
         "--progress=plain",
         "--platform", platform,
-        "-t", image,
+        "-t", full_image,
         "--load",
         context
     ]
@@ -368,13 +365,6 @@ def publish_image(image: str, tag: str, project_path: Path, platform: str = "lin
     result = subprocess.run(build_cmd, cwd=project_path)
     if result.returncode != 0:
         raise click.ClickException(f"Docker build failed with exit code {result.returncode}")
-    
-    # Tag the image
-    tag_cmd = ["docker", "tag", image, full_image]
-    LOGGER.info(f"Running: {' '.join(tag_cmd)}")
-    result = subprocess.run(tag_cmd, cwd=project_path)
-    if result.returncode != 0:
-        raise click.ClickException(f"Docker tag failed with exit code {result.returncode}")
     
     # Push the image
     push_cmd = ["docker", "push", full_image]
@@ -389,11 +379,13 @@ def publish_image(image: str, tag: str, project_path: Path, platform: str = "lin
 @argo_commands.command(name="submit")
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--dry_run", "-d", is_flag=True, default=False, help="Dry run submit")
 @click.pass_obj
 def submit(
     ctx,
     pipeline: str,
-    environment: str
+    environment: str,
+    dry_run: bool
 ):
     """Submit the pipeline to Argo."""
     project_path = find_kedro_project(Path.cwd()) or Path.cwd()
@@ -406,13 +398,14 @@ def submit(
         context = session.load_context()
         
         # Build and push the image
-        image = publish_image(
-            image=context.argo.deployment.image,
-            tag=context.argo.deployment.tag,
-            project_path=project_path,
-            platform=context.argo.deployment.target_platform,
-            context=context.argo.deployment.context,
-        )
+        image = f"{context.argo.deployment.image}:{context.argo.deployment.tag}"
+        if not dry_run:
+            publish_image(
+                full_image=full_image,
+                project_path=project_path,
+                platform=context.argo.deployment.target_platform,
+                context=context.argo.deployment.context,
+            )
         
         pipeline_tasks = get_argo_dag(
             kedro_pipelines[pipeline], 
@@ -427,6 +420,7 @@ def submit(
             trim_blocks=True,
             lstrip_blocks=True,
             pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
+            template=context.argo.template if context.argo.template else TemplateConfig(),
             pipeline_name=pipeline,
             image=image,
             namespace=context.argo.namespace,
@@ -440,25 +434,24 @@ def submit(
             yaml_without_anchors,
         )
 
-        # Use kubeconfig to submit to kubernetes
-        config.load_kube_config()
-        client = DynamicClient(config.new_client_from_config())
+        if not dry_run:
+            # Use kubeconfig to submit to kubernetes
+            config.load_kube_config()
+            client = DynamicClient(config.new_client_from_config())
 
-        resource = client.resources.get(
-            api_version=yaml_data["apiVersion"],
-            kind=yaml_data["kind"],
-        )
+            resource = client.resources.get(
+                api_version=yaml_data["apiVersion"],
+                kind=yaml_data["kind"],
+            )
 
-        response = resource.create(
-            body=yaml_data,
-            namespace=context.argo.namespace
-        )
-        
-        workflow_name = response.metadata.name
-        LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
-        LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{context.argo.namespace}/{workflow_name}")
-        
-        return workflow_name
+            response = resource.create(
+                body=yaml_data,
+                namespace=context.argo.namespace
+            )
+            
+            workflow_name = response.metadata.name
+            LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
+            LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{context.argo.namespace}/{workflow_name}")
 
 
 def save_argo_template(argo_template: str) -> str:
@@ -484,7 +477,7 @@ class ArgoTask:
     def node(self):
         return self._node
 
-    def add_parents(self, nodes: List[Node]):
+    def add_parents(self, nodes: list[Node]):
         self._parents.extend(nodes)
 
     def to_dict(self):
@@ -502,7 +495,7 @@ def get_argo_dag(
     pipeline: Pipeline, 
     machine_types: dict[str, MachineType],
     default_machine_type: str,
-) -> List[Dict[str, Any]]:
+) -> dict[str, ArgoTask]:
     """Function to convert the Kedro pipeline into Argo Tasks. The function
     iterates the nodes of the pipeline and generates Argo tasks with dependencies.
     These dependencies are inferred based on the input and output datasets for
@@ -548,7 +541,7 @@ def clean_name(name: str) -> str:
     return re.sub(r"[\W_]+", "-", name).strip("-")
 
 
-def clean_dependencies(elements) -> List[str]:
+def clean_dependencies(elements) -> list[str]:
     """Function to clean node dependencies.
 
     Operates by removing `params:` from the list and dismissing

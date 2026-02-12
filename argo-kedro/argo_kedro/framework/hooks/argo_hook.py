@@ -4,7 +4,7 @@ import re
 from logging import Logger, getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Union
+from typing import Any, Union, List, Optional
 
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
@@ -16,7 +16,7 @@ from kedro.pipeline.node import Node
 from omegaconf import OmegaConf
 
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RunnerConfig(BaseModel):
@@ -33,12 +33,26 @@ class DeploymentConfig(BaseModel):
     target_platform: str = "linux/amd64"
     context: str = "./"
 
+class SecretRef(BaseModel):
+    name: str
+    key: str
+
+class EnvironmentRef(BaseModel):
+
+    name: str
+    secret_ref: SecretRef
+
+class TemplateConfig(BaseModel):
+
+    environment: List[EnvironmentRef] = Field(default=[])
+
 class ArgoConfig(BaseModel):
     namespace: str
     deployment: DeploymentConfig
     machine_types: dict[str, MachineType]
     default_machine_type: str
     runner: RunnerConfig
+    template: Optional[TemplateConfig] = Field(default=TemplateConfig())
 
 
 class ArgoHook:
