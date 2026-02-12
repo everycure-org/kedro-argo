@@ -4,7 +4,7 @@ import re
 from logging import Logger, getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Union
+from typing import Any, Union, List
 
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
@@ -44,7 +44,7 @@ class EnvironmentRef(BaseModel):
 
 class TemplateConfig(BaseModel):
 
-    environment: List[SecretRef] = Field(default=[])
+    environment: List[EnvironmentRef] = Field(default=[])
 
 class ArgoConfig(BaseModel):
     namespace: str
