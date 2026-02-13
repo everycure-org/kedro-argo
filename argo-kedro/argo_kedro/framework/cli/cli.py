@@ -22,7 +22,7 @@ from argo_kedro.framework.hooks.argo_hook import MachineType, TemplateConfig
 from argo_kedro.pipeline.node import Node
 
 LOGGER = getLogger(__name__)
-LOGGER.setLevel(logging.INFO)
+LOGGER.setLevel("INFO")
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
