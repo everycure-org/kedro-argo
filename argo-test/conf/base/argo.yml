@@ -55,6 +55,42 @@ machine_types:
     mem: 384
     cpu: 96
     num_gpu: 8
+  c4-highmem-8:
+    mem: 62
+    cpu: 8
+    num_gpu: 0
+  c4-highmem-16:
+    mem: 124
+    cpu: 16
+    num_gpu: 0
+  c4-highmem-24:
+    mem: 186
+    cpu: 24
+    num_gpu: 0
+  c4-highmem-32:
+    mem: 248
+    cpu: 32
+    num_gpu: 0
+  c4-highmem-48:
+    mem: 372
+    cpu: 48
+    num_gpu: 0
+  c4-highmem-96:
+    mem: 744
+    cpu: 96
+    num_gpu: 0
+  c4-highmem-144:
+    mem: 1116
+    cpu: 144
+    num_gpu: 0
+  c4-highmem-192:
+    mem: 1488
+    cpu: 192
+    num_gpu: 0
+  c4-highmem-288:
+    mem: 2232
+    cpu: 288
+    num_gpu: 0
 
 # Default machine type to use when none specified
 default_machine_type: default
