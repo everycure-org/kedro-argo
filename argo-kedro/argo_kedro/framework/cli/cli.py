@@ -398,10 +398,10 @@ def submit(
         context = session.load_context()
         
         # Build and push the image
-        full_image = f"{context.argo.deployment.image}:{context.argo.deployment.tag}"
+        image = f"{context.argo.deployment.image}:{context.argo.deployment.tag}"
         if not dry_run:
             publish_image(
-                full_image=full_image,
+                full_image=image,
                 project_path=project_path,
                 platform=context.argo.deployment.target_platform,
                 context=context.argo.deployment.context,
