@@ -104,3 +104,9 @@ uv run python - <<EOF
 from kedro.framework.cli.utils import load_entry_points
 print(load_entry_points("kedro.project_commands"))
 EOF
+
+## No space left on device 
+
+If you receive the error `No space left on device (os error 28)` after running `uv run kedro argo submit`, it may be because Docker has used up all allocated  hard drive space on your machine. 
+
+You can delete unused Docker files to clear up space with the command `docker system prune -a`. 
