@@ -2,7 +2,6 @@ import re
 import subprocess
 from pathlib import Path
 from typing import Any, Iterable, Union
-from logging import getLogger
 
 import click
 import yaml
@@ -21,7 +20,6 @@ from argo_kedro.runners.fuse_runner import FusedRunner
 from argo_kedro.framework.hooks.argo_hook import MachineType, TemplateConfig
 from argo_kedro.pipeline.node import Node
 
-LOGGER = getLogger(__name__)
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
 
 
@@ -138,7 +136,7 @@ def _run_command_impl(
 ):    
     """Run the pipeline with the FusedRunner."""
 
-    LOGGER.warning(f"Using plugin entrypoint")
+    click.echo("Using plugin entrypoint")
     
     load_versions = None
     if load_version:
@@ -349,7 +347,7 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
     Returns:
         The full image name with tag
     """
-    LOGGER.info(f"Building Docker image: {full_image}")
+    click.echo(f"Building Docker image: {full_image}")
     
     # Build the image
     build_cmd = [
@@ -361,14 +359,14 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
         context
     ]
     
-    LOGGER.info(f"Running: {' '.join(build_cmd)}")
+    click.echo(f"Running: {' '.join(build_cmd)}")
     result = subprocess.run(build_cmd, cwd=project_path)
     if result.returncode != 0:
         raise click.ClickException(f"Docker build failed with exit code {result.returncode}")
     
     # Push the image
     push_cmd = ["docker", "push", full_image]
-    LOGGER.info(f"Running: {' '.join(push_cmd)}")
+    click.echo(f"Running: {' '.join(push_cmd)}")
     result = subprocess.run(push_cmd, cwd=project_path)
     if result.returncode != 0:
         raise click.ClickException(f"Docker push failed with exit code {result.returncode}")
@@ -414,7 +412,7 @@ def submit(
         )
 
         # Render the template
-        LOGGER.info("Rendering Argo workflow spec...")
+        click.echo("Rendering Argo workflow spec...")
         rendered_template = render_jinja_template(
             src=ARGO_TEMPLATES_DIR_PATH / "argo_wf_spec.tmpl",
             trim_blocks=True,
@@ -450,8 +448,8 @@ def submit(
             )
             
             workflow_name = response.metadata.name
-            LOGGER.info(f"Workflow submitted successfully: {workflow_name}")
-            LOGGER.info(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{context.argo.namespace}/{workflow_name}")
+            click.echo(f"Workflow submitted successfully: {workflow_name}")
+            click.echo(f"View workflow at: https://argo.ai-platform.dev.everycure.org/workflows/{context.argo.namespace}/{workflow_name}")
 
 
 def save_argo_template(argo_template: str) -> str:
@@ -515,7 +513,7 @@ def get_argo_dag(
             try:
                 task = ArgoTask(target_node, machine_types[target_node.machine_type] if isinstance(target_node, Node) and target_node.machine_type is not None else machine_types[default_machine_type])
             except KeyError as e:
-                LOGGER.error(f"Machine type not found for node `{target_node.name}`")
+                click.echo(f"Machine type not found for node `{target_node.name}`", err=True)
                 raise KeyError(f"Machine type `{target_node.machine_type}` not found for node `{target_node.name}`")
             
             task.add_parents(
