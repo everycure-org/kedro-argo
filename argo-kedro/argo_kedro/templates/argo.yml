@@ -104,6 +104,6 @@ default_machine_type: default
 #   environment:
 #     - name: OPENAI_API_TOKEN
 #       secret_ref:
-#         name: matrix_secrets
+#         name: secret_name
 #         key: OPENAI_API_KEY
 
