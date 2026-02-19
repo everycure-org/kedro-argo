@@ -84,7 +84,7 @@ Next, create the `globals.yml` file for the cloud env in `conf/cloud` folder (if
 ```yaml
 # Definition for conf/cloud/globals.yml for cloud storage
 paths:
-    base: gs://ai-platform-dev-everycure-storage/<your_project_name>/{oc.env:WORKFLOW_ID, dummy}
+    base: gs://ai-platform-dev-everycure-storage/<your_project_name>/${oc.env:WORKFLOW_ID, dummy}
 ```
 
 > **Important** Ensure to replace **<your_project_name>** with your project name.
