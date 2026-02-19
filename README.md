@@ -165,6 +165,42 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 ```
 
+## GPU support
+
+To run a `pipeline` on GPU, you would need to configure the `pipeline` machine type to a `g2` instance type. Currently supported GPU machine types are:
+
+| Machine Type   | CPU | Memory | GPU | GPU memory |
+|----------------|-----|--------|------|-----------|
+| g2-standard-4  | 4   | 16     | 1    | 24        |
+| g2-standard-8  | 8   | 32     | 1    | 24        |
+| g2-standard-12 | 12  | 48     | 1    | 24        |
+| g2-standard-16 | 16  | 64     | 1    | 24        |
+| g2-standard-24 | 24  | 96     | 2    | 48        |
+| g2-standard-32 | 32  | 128    | 1    | 24        |
+| g2-standard-48 | 48  | 192    | 4    | 96        |
+| g2-standard-96 | 96  | 384    | 8    | 192       |
+
+To use the following machine type, you would need to modify the `pipeline` code as follows:
+
+```python
+# NOTE: Import from the plugin, this is a drop in replacement!
+from argo_kedro.pipeline import Node
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        [
+            Node(
+                func=preprocess_companies,
+                inputs="companies",
+                outputs="preprocessed_companies",
+                name="preprocess_companies_node",
+                machine_type="g2-standard-4", # NOTE: enter a valid machine type from the above mentioned list.
+            ),
+            ...
+         ]
+    )
+```
+
 ## Fusing nodes for execution
 
 By default, the resulting Argo Workflow runs each node on a dedicated machine. Often we would like to co-locate multiple nodes for execution on the same machine, this is where the `FusePipeline` comes in.
