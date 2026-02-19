@@ -1,17 +1,23 @@
 name: Publish to Test PyPI
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types:
+      - completed
     branches:
       - main
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.workflow_run.head_sha }}
     
     - name: Set up Python
       uses: actions/setup-python@v5
