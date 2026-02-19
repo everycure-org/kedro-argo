@@ -378,7 +378,7 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
 @click.option("--pipeline", "-p", type=str, default="__default__", help="Specify which pipeline to execute")
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.option("--dry_run", "-d", is_flag=True, default=False, help="Dry run submit")
-@click.option("--workflow-name", "-w", type=str, default=None, help="Custom Argo workflow name")
+@click.option("--workflow-name", "-w", type=str, default="workflow", help="Custom Argo workflow name")
 @click.pass_obj
 def submit(
     ctx,
@@ -424,13 +424,12 @@ def submit(
             pipeline_name=pipeline,
             image=image,
             namespace=context.argo.namespace,
-            environment=environment
+            environment=environment,
+            workflow_name=workflow_name
         )
 
         # Load as yaml
         yaml_data = yaml.safe_load(rendered_template)
-        if workflow_name:
-            yaml_data['metadata']['generateName'] = workflow_name + "-"
         yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
         save_argo_template(
             yaml_without_anchors,
