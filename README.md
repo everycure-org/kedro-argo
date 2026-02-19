@@ -8,6 +8,21 @@
 
 - __Node fusing__: To maximize parallelisation, `argo-kedro` executes each Kedro node in a dedicated Argo task. The plugin exposes a `FusedPipeline` object that can be used to co-locate nodes for execution on a single Argo task.
 
+## Table of contents
+
+- [How do I install argo-kedro?](#how-do-i-install-argo-kedro)
+  - [Set up your Kedro project](#set-up-your-kedro-project)
+  - [Set up your venv](#set-up-your-venv)
+  - [Install the plugin](#install-the-plugin)
+  - [Initialize the plugin](#initialize-the-plugin)
+  - [Setting up your cloud environment](#setting-up-your-cloud-environment)
+  - [Submitting to the cluster](#submitting-to-the-cluster)
+  - [Configuring machines types](#configuring-machines-types)
+  - [GPU support](#gpu-support)
+  - [Fusing nodes for execution](#fusing-nodes-for-execution)
+  - [Using cluster Secrets](#using-cluster-secrets)
+- [Common errors](#common-errors)
+
 # How do I install argo-kedro?
 
 ## Set up your Kedro project
