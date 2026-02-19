@@ -215,9 +215,32 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 ## Fusing nodes for execution
 
-By default, the resulting Argo Workflow runs each node on a dedicated machine. Often we would like to co-locate multiple nodes for execution on the same machine, this is where the `FusePipeline` comes in.
+### Why fusing?
 
-The `FusePipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
+To run a Kedro pipeline on Argo, the question of how to map Kedro nodes to Argo tasks arises. There are two immediately obvious, albeit extreme, directions:
+
+1. Single Argo task for _entire_ pipeline
+   - Pros:
+      - Simple setup, Argo task invokes `kedro run` for entire pipeline
+   - Cons:
+      - Limited options for leveraging parallelization
+      - Entire pipeline has to run with single hardware configuration
+         - May be very expensive for pipelines requiring GPUs in some steps
+1. Argo task for _each_ node in the pipeline
+   - Pros:
+      - Maximize parallel processing capabilities
+      - Allow for different hardware configuration per node
+   - Cons:
+      - Scheduling overhead for very small Kedro nodes
+      - Complex DAG in Argo Workflows
+
+For our use-case, a pipeline with hundreds of nodes, we want to enable fusing sets of related<sup>2</sup> nodes for execution on _single_ Argo task. This avoids scheduling overhead while still supporting heterogeneous hardware configurations within the pipeline.
+
+<sup>2</sup> Related here is used in the broad sense of the word, i.e., they may have similar hardware needs, are highly coupled, or all rely on an external service.
+
+## The `FusedPipeline` object
+
+The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
 
 ```python
 from kedro.pipeline import Pipeline
