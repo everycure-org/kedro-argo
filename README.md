@@ -6,6 +6,8 @@
 
 - __Defining compute resources__: `argo-kedro` exposes a custom `Node` type that can be used to control the compute resouces available to the node.
 
+- __Node fusing__: To maximize parallelisation, `argo-kedro` executes each Kedro node in a dedicated Argo task. The plugin exposes a `FusedPipeline` object that can be used to co-locate nodes for execution on a single Argo task.
+
 # How do I install argo-kedro?
 
 ## Set up your Kedro project
