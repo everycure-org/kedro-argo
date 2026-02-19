@@ -1,6 +1,12 @@
-# User guide
+# What is argo-kedro
 
-> NOTE: This is a very early version of the plugin, and we aim to streamline this further going forward.
+`argo-kedro` is a [kedro-plugin](https://kedro.org/) for executing Kedro pipelines on [Argo Workflows](https://argoproj.github.io/workflows/). It's core functionalities are:
+
+- __Workflow construction__: `argo-kedro` constructs an [Argo Workflow](https://argo-workflows.readthedocs.io/en/latest/workflow-templates/) manifest from your Kedro pipeline for execution on your cluster. This ensures that the Kedro pipeline definition remains the single source of truth.
+
+- __Defining compute resources__: `argo-kedro` exposes a custom `Node` type that can be used to control the compute resouces available to the node.
+
+# How do I install argo-kedro?
 
 ## Set up your Kedro project
 
@@ -34,7 +40,7 @@ Validate the files, and make any changes required.
 
 ## Setting up your cloud environment
 
-Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
+Argo Workflows executes pipelines in a parallelized fashion, i.e., on different compute instances. It's therefore important that data exchanged between nodes is materialized in remote storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
 
 > NOTE: The split between the `base` and `cloud` environment enables development workflows where local data storage is used when iterating locally, while the cluster uses Google Cloud storage.
 
@@ -84,10 +90,10 @@ Next, create the `globals.yml` file for the cloud env in `conf/cloud` folder (if
 ```yaml
 # Definition for conf/cloud/globals.yml for cloud storage
 paths:
-    base: gs://ai-platform-dev-everycure-storage/<your_project_name>/${oc.env:WORKFLOW_ID, dummy}
+    base: gs://<your_bucket_name>/<your_project_name>/${oc.env:WORKFLOW_ID, dummy}
 ```
 
-> **Important** Ensure to replace **<your_project_name>** with your project name.
+> **Important** Ensure to replace **<your_bucket_name>** **<your_project_name>** with bucket and subdirectory respectively.
 
 > The plugin adds a few environment variables to the container automatically, one of these is the `WORKFLOW_ID` which
 > is a unique identifier of the workflow. This can be used as a unit of versioning as displayed below.
@@ -111,7 +117,7 @@ preprocessed_companies:
 Run the following CLI command to setup the cluster credentials.
 
 ```bash
-gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region us-central1 --project ec-ai-platform-dev
+gcloud container clusters get-credentials $CLUSTER_NAME --region us-central1 --project $PROJECT
 ```
 
 ### Ensure all catalog entries are registered
@@ -122,9 +128,11 @@ This is a very early version of the plugin, which does _not_ support memory data
 
 Run the following command to run on the cluster:
 
-```
+```bash
 uv run kedro argo submit
 ```
+
+Note, optionally you can supply a `--workflow-name` argument that controls the name of the resulting workflow.
 
 ## Configuring machines types
 
@@ -262,12 +270,12 @@ Workflows are allowed to consuming secrets provided by the cluster. Secrets can 
 
 template:
   environment:
-    # The configuration below mounts the `matrix_secrets.OPENAI_API_KEY` 
-    # to the `OPENAI_API_TOKEN` environment variable.
-    - name: OPENAI_API_TOKEN
+    # The configuration below mounts the `secret.TOKEN` 
+    # to the `TOKEN` environment variable.
+    - name: TOKEN
       secret_ref:
-        name: matrix_secrets
-        key: OPENAI_API_KEY
+        name: secret
+        key: TOKEN
 ```
 
 This ensures that the underlying machine has access to the secret, next use the `oc.env` resolver to pull the secret in the globals, catalog or parameters, as follows:
@@ -275,7 +283,7 @@ This ensures that the underlying machine has access to the secret, next use the 
 ```yml
 # base/globals.yml
 
-openai_token: ${oc.env:OPENAI_API_TOKEN}
+openai_token: ${oc.env:TOKEN}
 ```
 
 # Common errors
