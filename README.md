@@ -167,6 +167,8 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 ## GPU support
 
+The template Dockerfile comes with built-in support for running GPU workloads on Nvidia GPUs.
+
 To run a `pipeline` on GPU, you would need to configure the `pipeline` machine type to a `g2` instance type. Currently supported GPU machine types are:
 
 | Machine Type   | CPU | Memory | GPU | GPU memory |
