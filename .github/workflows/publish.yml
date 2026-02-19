@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'argo-kedro/**'
 
 jobs:
   deploy:

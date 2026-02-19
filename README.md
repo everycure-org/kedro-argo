@@ -1,6 +1,29 @@
-# User guide
+# What is argo-kedro
 
-> NOTE: This is a very early version of the plugin, and we aim to streamline this further going forward.
+`argo-kedro` is a [kedro-plugin](https://kedro.org/) for executing Kedro pipelines on [Argo Workflows](https://argoproj.github.io/workflows/). It's core functionalities are:
+
+- __Workflow construction__: `argo-kedro` constructs an [Argo Workflow](https://argo-workflows.readthedocs.io/en/latest/workflow-templates/) manifest from your Kedro pipeline for execution on your cluster. This ensures that the Kedro pipeline definition remains the single source of truth.
+
+- __Defining compute resources__: `argo-kedro` exposes a custom `Node` type that can be used to control the compute resouces available to the node.
+
+- __Node fusing__: To maximize parallelisation, `argo-kedro` executes each Kedro node in a dedicated Argo task. The plugin exposes a `FusedPipeline` object that can be used to co-locate nodes for execution on a single Argo task.
+
+## Table of contents
+
+- [How do I use argo-kedro?](#how-do-i-install-argo-kedro)
+  - [Set up your Kedro project](#set-up-your-kedro-project)
+  - [Set up your venv](#set-up-your-venv)
+  - [Install the plugin](#install-the-plugin)
+  - [Setting up your cloud environment](#setting-up-your-cloud-environment)
+  - [Submitting to the cluster](#submitting-to-the-cluster)
+- [Advanced configuration](#advanced)
+  - [Configuring machines types](#configuring-machines-types)
+  - [GPU support](#gpu-support)
+  - [Fusing nodes for execution](#fusing-nodes-for-execution)
+  - [Using cluster Secrets](#using-cluster-secrets)
+- [Common errors](#common-errors)
+
+# How do I install argo-kedro?
 
 ## Set up your Kedro project
 
@@ -22,8 +45,6 @@ uv sync
 uv add argo-kedro
 ```
 
-## Initialize the plugin
-
 Next, initialise the plugin, this will create a `argo.yml` file that will house components of the argo configuration. Moreover, the plugin will prompt for the creation of baseline `Dockerfile` and `.dockerignore` files.
 
 ```bash
@@ -34,7 +55,7 @@ Validate the files, and make any changes required.
 
 ## Setting up your cloud environment
 
-Our cluster infrastructure executes pipelines in a parallelized fashion, i.e., on different machines. It's therefore important that data exchanges between nodes is materialized in Cloud Storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
+Argo Workflows executes pipelines in a parallelized fashion, i.e., on different compute instances. It's therefore important that data exchanged between nodes is materialized in remote storage, as local data storage is not shared among these machines. Let's start by installing the `gcsfs` package.
 
 > NOTE: The split between the `base` and `cloud` environment enables development workflows where local data storage is used when iterating locally, while the cluster uses Google Cloud storage.
 
@@ -84,10 +105,10 @@ Next, create the `globals.yml` file for the cloud env in `conf/cloud` folder (if
 ```yaml
 # Definition for conf/cloud/globals.yml for cloud storage
 paths:
-    base: gs://ai-platform-dev-everycure-storage/<your_project_name>/${oc.env:WORKFLOW_ID, dummy}
+    base: gs://<your_bucket_name>/<your_project_name>/${oc.env:WORKFLOW_ID, dummy}
 ```
 
-> **Important** Ensure to replace **<your_project_name>** with your project name.
+> **Important** Ensure to replace **<your_bucket_name>** **<your_project_name>** with bucket and subdirectory respectively.
 
 > The plugin adds a few environment variables to the container automatically, one of these is the `WORKFLOW_ID` which
 > is a unique identifier of the workflow. This can be used as a unit of versioning as displayed below.
@@ -111,7 +132,7 @@ preprocessed_companies:
 Run the following CLI command to setup the cluster credentials.
 
 ```bash
-gcloud container clusters get-credentials ai-platform-dev-gke-cluster --region us-central1 --project ec-ai-platform-dev
+gcloud container clusters get-credentials $CLUSTER_NAME --region us-central1 --project $PROJECT
 ```
 
 ### Ensure all catalog entries are registered
@@ -122,9 +143,13 @@ This is a very early version of the plugin, which does _not_ support memory data
 
 Run the following command to run on the cluster:
 
-```
+```bash
 uv run kedro argo submit
 ```
+
+Note, optionally you can supply a `--workflow-name` argument that controls the name of the resulting workflow.
+
+# Advanced
 
 ## Configuring machines types
 
@@ -165,11 +190,72 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 ```
 
+## GPU support
+
+The template Dockerfile comes with built-in support for running GPU workloads on Nvidia GPUs.
+
+To run a `pipeline` on GPU, you would need to configure the `pipeline` machine type to a `g2` instance type. Currently supported GPU machine types are:
+
+| Machine Type   | CPU | Memory | GPU | GPU memory |
+|----------------|-----|--------|------|-----------|
+| g2-standard-4  | 4   | 16     | 1    | 24        |
+| g2-standard-8  | 8   | 32     | 1    | 24        |
+| g2-standard-12 | 12  | 48     | 1    | 24        |
+| g2-standard-16 | 16  | 64     | 1    | 24        |
+| g2-standard-24 | 24  | 96     | 2    | 48        |
+| g2-standard-32 | 32  | 128    | 1    | 24        |
+| g2-standard-48 | 48  | 192    | 4    | 96        |
+| g2-standard-96 | 96  | 384    | 8    | 192       |
+
+To use the following machine type, you would need to modify the `pipeline` code as follows:
+
+```python
+# NOTE: Import from the plugin, this is a drop in replacement!
+from argo_kedro.pipeline import Node
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        [
+            Node(
+                func=preprocess_companies,
+                inputs="companies",
+                outputs="preprocessed_companies",
+                name="preprocess_companies_node",
+                machine_type="g2-standard-4", # NOTE: enter a valid machine type from the above mentioned list.
+            ),
+            ...
+         ]
+    )
+```
+
 ## Fusing nodes for execution
 
-By default, the resulting Argo Workflow runs each node on a dedicated machine. Often we would like to co-locate multiple nodes for execution on the same machine, this is where the `FusePipeline` comes in.
+### Why fusing?
 
-The `FusePipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
+To run a Kedro pipeline on Argo, the question of how to map Kedro nodes to Argo tasks arises. There are two immediately obvious, albeit extreme, directions:
+
+1. Single Argo task for _entire_ pipeline
+   - Pros:
+      - Simple setup, Argo task invokes `kedro run` for entire pipeline
+   - Cons:
+      - Limited options for leveraging parallelization
+      - Entire pipeline has to run with single hardware configuration
+         - May be very expensive for pipelines requiring GPUs in some steps
+1. Argo task for _each_ node in the pipeline
+   - Pros:
+      - Maximize parallel processing capabilities
+      - Allow for different hardware configuration per node
+   - Cons:
+      - Scheduling overhead for very small Kedro nodes
+      - Complex DAG in Argo Workflows
+
+For our use-case, a pipeline with hundreds of nodes, we want to enable fusing sets of related<sup>2</sup> nodes for execution on _single_ Argo task. This avoids scheduling overhead while still supporting heterogeneous hardware configurations within the pipeline.
+
+<sup>2</sup> Related here is used in the broad sense of the word, i.e., they may have similar hardware needs, are highly coupled, or all rely on an external service.
+
+## The `FusedPipeline` object
+
+The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
 
 ```python
 from kedro.pipeline import Pipeline
@@ -224,12 +310,12 @@ Workflows are allowed to consuming secrets provided by the cluster. Secrets can 
 
 template:
   environment:
-    # The configuration below mounts the `matrix_secrets.OPENAI_API_KEY` 
-    # to the `OPENAI_API_TOKEN` environment variable.
-    - name: OPENAI_API_TOKEN
+    # The configuration below mounts the `secret.TOKEN` 
+    # to the `TOKEN` environment variable.
+    - name: TOKEN
       secret_ref:
-        name: matrix_secrets
-        key: OPENAI_API_KEY
+        name: secret
+        key: TOKEN
 ```
 
 This ensures that the underlying machine has access to the secret, next use the `oc.env` resolver to pull the secret in the globals, catalog or parameters, as follows:
@@ -237,7 +323,7 @@ This ensures that the underlying machine has access to the secret, next use the 
 ```yml
 # base/globals.yml
 
-openai_token: ${oc.env:OPENAI_API_TOKEN}
+openai_token: ${oc.env:TOKEN}
 ```
 
 # Common errors
