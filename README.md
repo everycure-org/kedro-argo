@@ -10,13 +10,13 @@
 
 ## Table of contents
 
-- [How do I install argo-kedro?](#how-do-i-install-argo-kedro)
+- [How do I use argo-kedro?](#how-do-i-install-argo-kedro)
   - [Set up your Kedro project](#set-up-your-kedro-project)
   - [Set up your venv](#set-up-your-venv)
   - [Install the plugin](#install-the-plugin)
-  - [Initialize the plugin](#initialize-the-plugin)
   - [Setting up your cloud environment](#setting-up-your-cloud-environment)
   - [Submitting to the cluster](#submitting-to-the-cluster)
+- [Advanced configuration](#advanced)
   - [Configuring machines types](#configuring-machines-types)
   - [GPU support](#gpu-support)
   - [Fusing nodes for execution](#fusing-nodes-for-execution)
@@ -44,8 +44,6 @@ uv sync
 ```bash
 uv add argo-kedro
 ```
-
-## Initialize the plugin
 
 Next, initialise the plugin, this will create a `argo.yml` file that will house components of the argo configuration. Moreover, the plugin will prompt for the creation of baseline `Dockerfile` and `.dockerignore` files.
 
@@ -150,6 +148,8 @@ uv run kedro argo submit
 ```
 
 Note, optionally you can supply a `--workflow-name` argument that controls the name of the resulting workflow.
+
+# Advanced
 
 ## Configuring machines types
 
