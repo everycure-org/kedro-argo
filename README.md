@@ -352,3 +352,16 @@ To fix the issue, pin the version of the following library:
 ```
 gcsfs==2024.3.1
 ```
+
+---
+
+## Brand and Trademark Notice
+
+**Important**: The "Every Cure" name, logo, and related trademarks are the exclusive property of
+Every Cure. Contributors and users of this open-source project are not authorized to use the Every
+Cure brand, logo, or trademarks in any way that suggests endorsement, affiliation, or sponsorship
+without explicit written permission from Every Cure.
+
+This project is open source and available under the terms of its license, but the Every Cure brand
+and trademarks remain protected. Please respect these intellectual property rights.
+
