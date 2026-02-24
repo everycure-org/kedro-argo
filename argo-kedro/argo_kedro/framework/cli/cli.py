@@ -393,7 +393,7 @@ def submit(
     
     with KedroSession.create(
         project_path=project_path,
-        env=environment,
+        env="base", # NOTE: Currently using the base env to avoid cloud related catalog issues
     ) as session:
         context = session.load_context()
         
