@@ -509,16 +509,36 @@ def get_failed_nodes(workflow: Any) -> list[str]:
 def _get_workflow_image(workflow: Any) -> str | None:
     """Extract the container image from a workflow's spec templates.
 
-    Looks through the workflow's templates for the first container image
-    that is not a trivial utility (e.g. ``busybox``, ``alpine``).
+    Prefers the image defined on the ``kedro`` template (the main
+    workload), and falls back to the first non-trivial utility image
+    (i.e. not ``busybox`` or ``alpine``) if that template is missing
+    or does not define an image.
 
     Returns:
         The full ``image:tag`` string, or ``None`` if not found.
     """
-    templates = workflow.get("spec", {}).get("templates", [])
+    templates = workflow.get("spec", {}).get("templates", []) or []
+
+    # First, try to get the image from the dedicated ``kedro`` template.
     for tmpl in templates:
-        image = (tmpl.get("container") or {}).get("image")
-        if image and image.split(":")[0] not in ("busybox", "alpine"):
+        if tmpl.get("name") == "kedro":
+            container = tmpl.get("container") or {}
+            image = container.get("image")
+            if image:
+                return image
+            # If the kedro template exists but has no image, stop searching
+            # for kedro and fall back to the heuristic below.
+            break
+
+    # Fallback: keep the existing heuristic of picking the first
+    # non-busybox/alpine image from any container template.
+    for tmpl in templates:
+        container = tmpl.get("container") or {}
+        image = container.get("image")
+        if not image:
+            continue
+        base_image = image.split(":", 1)[0]
+        if base_image not in ("busybox", "alpine"):
             return image
     return None
 
