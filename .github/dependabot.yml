@@ -1,0 +1,32 @@
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Python dependencies for argo-kedro (the library)
+  - package-ecosystem: "pip"
+    directory: "/argo-kedro"
+    schedule:
+      interval: "weekly"
+
+  # Python dependencies for argo-test
+  - package-ecosystem: "pip"
+    directory: "/argo-test"
+    schedule:
+      interval: "weekly"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/argo-kedro/argo_kedro/templates"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/argo-test"
+    schedule:
+      interval: "weekly"
