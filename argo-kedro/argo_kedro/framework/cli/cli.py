@@ -543,7 +543,7 @@ def resubmit(
 
     with KedroSession.create(
         project_path=project_path,
-        env="base",
+        env=environment,
     ) as session:
         context = session.load_context()
         namespace = context.argo.namespace
