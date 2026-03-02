@@ -524,6 +524,7 @@ class TestResubmitCommand:
             patch(f"{self.CLI_MODULE}.bootstrap_project"),
             patch(f"{self.CLI_MODULE}.KedroSession.create", return_value=mock_session),
             patch(f"{self.CLI_MODULE}.config.load_kube_config"),
+            patch(f"{self.CLI_MODULE}.config.new_client_from_config"),
             patch(f"{self.CLI_MODULE}.DynamicClient"),
         ]
         self.mocks = [p.start() for p in patchers]
