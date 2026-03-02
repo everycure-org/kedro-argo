@@ -177,6 +177,7 @@ class KedroClickGroup(click.Group):
         if is_kedro_project(find_kedro_project(Path.cwd())):
             self.add_command(init)
             self.add_command(submit)
+            self.add_command(resubmit)
 
     def list_commands(self, ctx):
         self.reset_commands()
@@ -348,12 +349,16 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
         The full image name with tag
     """
     click.echo(f"Building Docker image: {full_image}")
+
+    # Resolve the Dockerfile path — always use the one in the project root
+    dockerfile_path = project_path / "Dockerfile"
     
     # Build the image
     build_cmd = [
         "docker", "buildx", "build",
         "--progress=plain",
         "--platform", platform,
+        "-f", str(dockerfile_path),
         "-t", full_image,
         "--load",
         context
@@ -461,6 +466,166 @@ def save_argo_template(argo_template: str) -> str:
     with open(file_path, "w") as f:
         f.write(argo_template)
     return str(file_path)
+
+
+def get_workflow(client: DynamicClient, namespace: str, workflow_name: str) -> Any:
+    """Fetch an Argo workflow by name.
+
+    Args:
+        client: Kubernetes dynamic client
+        namespace: Namespace where the workflow lives
+        workflow_name: Name of the workflow to fetch
+
+    Returns:
+        The workflow resource object
+    """
+    resource = client.resources.get(
+        api_version="argoproj.io/v1alpha1",
+        kind="Workflow",
+    )
+    return resource.get(name=workflow_name, namespace=namespace)
+
+
+def get_failed_nodes(workflow: Any) -> list[str]:
+    """Extract the names of failed nodes from an Argo workflow.
+
+    Args:
+        workflow: The Argo workflow resource object
+
+    Returns:
+        List of failed node display names
+    """
+    failed_nodes = []
+    nodes = workflow.get("status", {}).get("nodes", {})
+    for node_id, node_info in nodes.items():
+        phase = node_info.get("phase", "")
+        node_type = node_info.get("type", "")
+        if phase in ("Failed", "Error") and node_type == "Pod":
+            display_name = node_info.get("displayName", node_info.get("name", node_id))
+            failed_nodes.append(display_name)
+    return failed_nodes
+
+
+def _get_workflow_image(workflow: Any) -> str | None:
+    """Extract the container image from a workflow's spec templates.
+
+    Looks through the workflow's templates for the first container image
+    that is not a trivial utility (e.g. ``busybox``, ``alpine``).
+
+    Returns:
+        The full ``image:tag`` string, or ``None`` if not found.
+    """
+    templates = workflow.get("spec", {}).get("templates", [])
+    for tmpl in templates:
+        image = (tmpl.get("container") or {}).get("image")
+        if image and image.split(":")[0] not in ("busybox", "alpine"):
+            return image
+    return None
+
+
+@argo_commands.command(name="resubmit")
+@click.option("--workflow-name", "-w", type=str, default=None, help="Name of the failed Argo workflow to resubmit")
+@click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
+@click.option("--rebuild/--no-rebuild", default=True, help="Rebuild and push the Docker image before resubmitting")
+def resubmit(
+    workflow_name: str,
+    environment: str,
+    rebuild: bool,
+):
+    """Rebuild the image and retry a failed Argo workflow.
+
+    This command optionally rebuilds and pushes the Docker image, then
+    uses ``argo retry`` to re-run only the failed/errored nodes of the
+    workflow.  Already-succeeded nodes are skipped.
+    """
+    project_path = find_kedro_project(Path.cwd()) or Path.cwd()
+    bootstrap_project(project_path)
+
+    with KedroSession.create(
+        project_path=project_path,
+        env="base",
+    ) as session:
+        context = session.load_context()
+        namespace = context.argo.namespace
+
+        # Connect to the cluster
+        config.load_kube_config()
+        client = DynamicClient(config.new_client_from_config())
+
+        # Prompt for workflow name if not provided
+        if not workflow_name:
+            workflow_name = click.prompt("Enter the workflow name to retry")
+
+        # Fetch the workflow
+        click.echo(f"\nFetching workflow: {workflow_name}")
+        try:
+            workflow = get_workflow(client, namespace, workflow_name)
+        except Exception as e:
+            raise click.ClickException(f"Failed to fetch workflow '{workflow_name}': {e}")
+
+        workflow_phase = workflow.get("status", {}).get("phase", "Unknown")
+        if workflow_phase not in ("Failed", "Error"):
+            click.secho(
+                f"Warning: workflow '{workflow_name}' has phase '{workflow_phase}', not 'Failed' or 'Error'.",
+                fg="yellow",
+            )
+            if not click.confirm("Do you still want to retry this workflow?"):
+                return
+
+        # Show failed nodes
+        failed_nodes = get_failed_nodes(workflow)
+        if failed_nodes:
+            click.echo(f"\nFailed nodes ({len(failed_nodes)}):")
+            for node_name in failed_nodes:
+                click.echo(f"  - {node_name}")
+        else:
+            click.echo("\nNo individual failed nodes detected (workflow-level failure).")
+
+        # Rebuild image if requested — always use the image from the
+        # workflow spec so it matches what the retried pods will pull,
+        # regardless of what the current .env / config says.
+        if rebuild:
+            image = _get_workflow_image(workflow)
+            if not image:
+                raise click.ClickException(
+                    "Could not determine the container image from the workflow spec. "
+                    "Please rebuild manually and retry with --no-rebuild."
+                )
+            click.echo(f"\nRebuilding image (from workflow): {image}")
+            publish_image(
+                full_image=image,
+                project_path=project_path,
+                platform=context.argo.deployment.target_platform,
+                context=context.argo.deployment.context,
+            )
+
+        # Retry the workflow using the Argo CLI.
+        # `argo retry` resets failed/errored nodes and re-runs them (and
+        # their downstream dependents) while skipping already-succeeded
+        # nodes.  Because the workflow uses imagePullPolicy: Always, the
+        # freshly-pushed image will be pulled automatically.
+        click.echo(f"\nRetrying workflow: {workflow_name}")
+        cmd = [
+            "argo", "retry", workflow_name,
+            "--namespace", namespace,
+            "--restart-successful=false",
+        ]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            click.secho(f"\nWorkflow retried successfully: {workflow_name}", fg="green")
+            click.echo(
+                f"View workflow at: https://argo.ai-platform.dev.everycure.org"
+                f"/workflows/{namespace}/{workflow_name}"
+            )
+            if result.stdout.strip():
+                click.echo(result.stdout.strip())
+        except FileNotFoundError:
+            raise click.ClickException(
+                "The 'argo' CLI is not installed or not on PATH. "
+                "Install it from https://github.com/argoproj/argo-workflows/releases"
+            )
+        except subprocess.CalledProcessError as e:
+            raise click.ClickException(f"argo retry failed: {e.stderr.strip()}")
 
 
 class ArgoTask:
