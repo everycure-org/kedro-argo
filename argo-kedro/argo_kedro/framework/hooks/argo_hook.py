@@ -61,7 +61,6 @@ class ArgoHook:
         Args:
             context: The context that was created.
         """
-        
         try:
             if "argo" not in context.config_loader.config_patterns.keys():
                 context.config_loader.config_patterns.update(
