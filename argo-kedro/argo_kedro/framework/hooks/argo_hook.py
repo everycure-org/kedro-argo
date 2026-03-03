@@ -1,63 +1,12 @@
-
-import os
-import re
 from logging import Logger, getLogger
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Any, Union, List, Optional
+from typing import List, Optional
 
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
-from kedro.framework.startup import _get_project_metadata
-from kedro.io import CatalogProtocol, DataCatalog
-from kedro.pipeline import Pipeline
-from kedro.pipeline.node import Node
 from omegaconf import OmegaConf
 
 from pydantic import BaseModel, Field
-
-
-def _load_dotenv(project_path: Path) -> None:
-    """Load .env file from the project root into os.environ (if it exists).
-
-    Supports lines of the form KEY=VALUE (with optional quoting).
-    Lines starting with # and blank lines are skipped.
-    """
-    env_file = project_path / ".env"
-    if not env_file.is_file():
-        return
-    with env_file.open() as fh:
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            key = key.strip()
-            value = value.strip()
-            # Strip surrounding quotes
-            if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
-                value = value[1:-1]
-            os.environ.setdefault(key, value)
-
-
-_UNSET = object()
-
-
-def _oc_env_resolver(key: str, default: Any = _UNSET) -> str:
-    """Custom resolver that replicates the built-in ``oc.env`` behaviour.
-
-    Kedro's OmegaConfigLoader clears the built-in ``oc.env`` resolver,
-    so we re-register it ourselves.
-    """
-    value = os.environ.get(key)
-    if value is not None:
-        return value
-    if default is not _UNSET:
-        return default
-    raise KeyError(f"Environment variable '{key}' is not set and no default was provided")
 
 
 class RunnerConfig(BaseModel):
@@ -112,16 +61,7 @@ class ArgoHook:
         Args:
             context: The context that was created.
         """
-        # Load .env file from the project root so that oc.env resolvers can
-        # pick up values such as DOCKER_IMAGE / DOCKER_TAG.
-        _load_dotenv(context.project_path)
-
-        # Kedro's OmegaConfigLoader clears the built-in oc.env resolver.
-        # Re-register it so that argo.yml (and other configs) can use
-        # ${oc.env:VAR_NAME, default} interpolations.
-        if not OmegaConf.has_resolver("oc.env"):
-            OmegaConf.register_new_resolver("oc.env", _oc_env_resolver)
-
+        
         try:
             if "argo" not in context.config_loader.config_patterns.keys():
                 context.config_loader.config_patterns.update(
