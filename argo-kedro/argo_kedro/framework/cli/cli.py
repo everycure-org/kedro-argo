@@ -344,26 +344,24 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
         project_path: Path to the project root
         platform: Target platform for the image
         context: Docker build context directory (relative to project_path or absolute)
-        dockerfile: Path to the Dockerfile (relative to the build context)
-        
+        dockerfile: The name of the Dockerfile to use (default is "Dockerfile")
     Returns:
         The full image name with tag
     """
     click.echo(f"Building Docker image: {full_image}")
 
-    # Resolve paths relative to the project directory.
-    build_context = str((project_path / context).resolve())
-    dockerfile_path = str((project_path / context / dockerfile).resolve())
-
+    # Resolve the Dockerfile path — always use the one in the project root
+    dockerfile_path = project_path / dockerfile
+    
     # Build the image
     build_cmd = [
         "docker", "buildx", "build",
         "--progress=plain",
         "--platform", platform,
-        "-f", dockerfile_path,
+        "-f", str(dockerfile_path),
         "-t", full_image,
         "--load",
-        build_context,
+        context
     ]
     
     click.echo(f"Running: {' '.join(build_cmd)}")
