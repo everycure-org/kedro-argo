@@ -336,7 +336,7 @@ def init(env: str, force: bool, silent: bool):
                     )
                 )
 
-def publish_image(full_image: str, project_path: Path, platform: str = "linux/amd64", context: str = "./") -> str:
+def publish_image(full_image: str, project_path: Path, platform: str = "linux/amd64", context: str = "./", dockerfile: str = "Dockerfile") -> str:
     """Build and push the Docker image.
     
     Args:
@@ -344,24 +344,26 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
         project_path: Path to the project root
         platform: Target platform for the image
         context: Docker build context directory (relative to project_path or absolute)
+        dockerfile: Path to the Dockerfile (relative to the build context)
         
     Returns:
         The full image name with tag
     """
     click.echo(f"Building Docker image: {full_image}")
 
-    # Resolve the Dockerfile path — always use the one in the project root
-    dockerfile_path = project_path / "Dockerfile"
-    
+    # Resolve paths relative to the project directory.
+    build_context = str((project_path / context).resolve())
+    dockerfile_path = str((project_path / context / dockerfile).resolve())
+
     # Build the image
     build_cmd = [
         "docker", "buildx", "build",
         "--progress=plain",
         "--platform", platform,
-        "-f", str(dockerfile_path),
+        "-f", dockerfile_path,
         "-t", full_image,
         "--load",
-        context
+        build_context,
     ]
     
     click.echo(f"Running: {' '.join(build_cmd)}")
@@ -410,6 +412,7 @@ def submit(
                 project_path=project_path,
                 platform=context.argo.deployment.target_platform,
                 context=context.argo.deployment.context,
+                dockerfile=context.argo.deployment.dockerfile,
             )
         
         pipeline_tasks = get_argo_dag(
@@ -617,6 +620,7 @@ def resubmit(
                 project_path=project_path,
                 platform=context.argo.deployment.target_platform,
                 context=context.argo.deployment.context,
+                dockerfile=context.argo.deployment.dockerfile,
             )
 
         # Retry the workflow using the Argo CLI.

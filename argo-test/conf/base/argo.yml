@@ -7,6 +7,7 @@ deployment:
   tag: latest  # Image tag
   target_platform: linux/amd64  # Target platform for the image
   context: ../  # Docker build context directory — repo root, so workspace deps (argo-kedro) are accessible
+  dockerfile: Dockerfile  # Dockerfile path relative to the build context
 
 # Configuration passed to the runner
 runner:

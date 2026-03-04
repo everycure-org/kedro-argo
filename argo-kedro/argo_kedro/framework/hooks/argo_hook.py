@@ -22,6 +22,7 @@ class DeploymentConfig(BaseModel):
     tag: str = "latest"
     target_platform: str = "linux/amd64"
     context: str = "./"
+    dockerfile: str = "Dockerfile"
 
 class SecretRef(BaseModel):
     name: str
