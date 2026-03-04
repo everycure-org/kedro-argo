@@ -4,7 +4,6 @@ from typing import List, Optional
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
-from omegaconf import OmegaConf
 
 from pydantic import BaseModel, Field
 
