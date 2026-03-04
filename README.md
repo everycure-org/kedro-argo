@@ -157,7 +157,7 @@ uv run kedro argo resubmit
 
 > **Note:** This will override the docker image name and tag from the argo config as resubmitting requires that the workflows docker image and tag doesn't change. So there is no additional configuration needed to be done from your end.
 
-Note, optionally you can supply a `--workflow-name` argument that controls the name of the resulting workflow.
+When using `resubmit`, you can optionally supply a `--workflow-name` argument to select which existing workflow run to retry; it does not set the name of a new workflow.
 
 # Advanced
 
