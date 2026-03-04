@@ -551,7 +551,7 @@ def _get_workflow_image(workflow: Any) -> str | None:
 @click.option("--environment", "-e", type=str, default="cloud", help="Kedro environment to execute in")
 @click.option("--rebuild/--no-rebuild", default=True, help="Rebuild and push the Docker image before resubmitting")
 def resubmit(
-    workflow_name: str,
+    workflow_name: str | None,
     environment: str,
     rebuild: bool,
 ):
