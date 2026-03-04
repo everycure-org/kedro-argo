@@ -155,7 +155,7 @@ If a pipeline fails, instead of submitting a new pipeline run, you could simply 
 uv run kedro argo resubmit
 ```
 
-> **Note:** This will override the docker image name and tag from the argo config as resubmitting requires that the workflows docker image and tag doesn't change. So there is no additional configuration needed to be done from your end.
+> **Note:** This command overrides the Docker image name and tag specified in the Argo configuration, because resubmitting requires that the workflow's Docker image and tag remain unchanged. No additional configuration is required on your part.
 
 When using `resubmit`, you can optionally supply a `--workflow-name` argument to select which existing workflow run to retry; it does not set the name of a new workflow.
 
