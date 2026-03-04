@@ -6,7 +6,8 @@ deployment:
   image: your-registry/your-image  # Docker image to use for workflow execution
   tag: latest  # Image tag
   target_platform: linux/amd64  # Target platform for the image
-  context: ./  # Docker build context directory (optional)
+  context: ./  # Docker build context directory (relative to the Kedro project root)
+  dockerfile: Dockerfile  # Dockerfile path relative to the build context
 
 # Configuration passed to the runner
 runner:
