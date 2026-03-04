@@ -336,7 +336,7 @@ def init(env: str, force: bool, silent: bool):
                     )
                 )
 
-def publish_image(full_image: str, project_path: Path, platform: str = "linux/amd64", context: str = "./", dockerfile: str = "Dockerfile") -> str:
+def publish_image(full_image: str, project_path: Path, platform: str, context: str, dockerfile: str) -> str:
     """Build and push the Docker image.
     
     Args:
@@ -344,7 +344,7 @@ def publish_image(full_image: str, project_path: Path, platform: str = "linux/am
         project_path: Path to the project root
         platform: Target platform for the image
         context: Docker build context directory (relative to project_path or absolute)
-        dockerfile: The name of the Dockerfile to use (default is "Dockerfile")
+        dockerfile: The name of the Dockerfile to use
     Returns:
         The full image name with tag
     """
