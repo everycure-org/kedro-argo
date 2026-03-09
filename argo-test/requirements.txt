@@ -5,4 +5,4 @@ kedro[jupyter]~=1.2.0
 kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, plotly-plotlydataset, plotly-jsondataset, matplotlib-matplotlibdataset]>=3.0
 kedro-viz>=6.7.0
 scikit-learn~=1.5.1
-seaborn~=0.12.1
+seaborn~=0.13.2
