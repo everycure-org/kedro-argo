@@ -17,7 +17,8 @@ from kedro.framework.cli.project import TAG_ARG_HELP
 from kedro.framework.project import pipelines as kedro_pipelines
 from kedro.pipeline import Pipeline
 from argo_kedro.runners.fuse_runner import FusedRunner
-from argo_kedro.framework.hooks.argo_hook import MachineType, TemplateConfig
+from argo_kedro.config.resolvers import random
+from argo_kedro.config.kedro_argo_config import ArgoConfig, MachineType, TemplateConfig
 from argo_kedro.pipeline.node import Node
 
 ARGO_TEMPLATES_DIR_PATH = Path(__file__).parent.parent.parent / "templates"
@@ -431,7 +432,8 @@ def submit(
             image=image,
             namespace=context.argo.namespace,
             environment=environment,
-            workflow_name=workflow_name
+            workflow_name=workflow_name,
+            random=random()
         )
 
         # Load as yaml
