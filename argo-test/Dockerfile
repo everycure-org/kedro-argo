@@ -21,11 +21,14 @@ ENV TZ=UTC
 
 COPY --from=ghcr.io/astral-sh/uv:0.6.9 /uv /uvx /bin/
 
-COPY pyproject.toml .
-COPY uv.lock .
+# Copy the workspace-level argo-kedro dependency so uv can resolve it
+COPY argo-kedro /argo-kedro
+
+COPY argo-test/pyproject.toml .
+COPY argo-test/uv.lock .
 RUN uv sync --frozen --no-install-project
 ENV PATH=/app/.venv/bin:$PATH
 
-COPY . .
+COPY argo-test/ .
 
 RUN uv sync --frozen

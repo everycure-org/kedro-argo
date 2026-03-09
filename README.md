@@ -147,7 +147,17 @@ Run the following command to run on the cluster:
 uv run kedro argo submit
 ```
 
-Note, optionally you can supply a `--workflow-name` argument that controls the name of the resulting workflow.
+## Retrying a failed workload
+
+If a pipeline fails, instead of submitting a new pipeline run, you could simply resubmit the failed workflow by running the following command:
+
+```bash
+uv run kedro argo resubmit
+```
+
+> **Note:** This command overrides the Docker image name and tag specified in the Argo configuration, because resubmitting requires that the workflow's Docker image and tag remain unchanged. No additional configuration is required on your part.
+
+When using `resubmit`, you can optionally supply a `--workflow-name` argument to select which existing workflow run to retry; it does not set the name of a new workflow.
 
 # Advanced
 
