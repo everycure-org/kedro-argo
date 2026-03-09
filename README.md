@@ -313,7 +313,7 @@ The code snippet above wraps the `preprocess_companies_node` and `preprocess_shu
 
 ## Using cluster Secrets
 
-Workflows are allowed to consuming secrets provided by the cluster. Secrets can be mounted using the `template` section of the `argo.yml` file.
+Workflows are allowed to consume secrets provided by the cluster. Secrets can be mounted using the `template` section of the `argo.yml` file.
 
 ```yaml
 # argo.yml
