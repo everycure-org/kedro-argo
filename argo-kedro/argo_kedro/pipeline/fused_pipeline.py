@@ -14,33 +14,31 @@ class FusedNode(Node):
         self._nodes = nodes
         self._name = name
         self._namespace = None
-        self._inputs = []
-        self._outputs = []
+        self._inputs = set()
+        self._outputs = set()
         self._confirms = []
         self._func = lambda: None
-        self._tags = []
+        self._tags = set()
         self._machine_type = machine_type
 
         for node in nodes:
-            self._inputs.extend(node.inputs)
-            self._outputs.extend(node.outputs)
-            self._tags.extend(node._tags)
+            self._inputs.update(node.inputs)
+            self._outputs.update(node.outputs)
+            self._tags.update(node._tags)
 
         # NOTE: Exclude ouputs made as part of the intermediate nodes
-        for node in self._outputs:
-            if node in self._inputs:
-                self._inputs.remove(node)
-
-        self._tags = list(set(self._tags))
+        self._inputs -= self._outputs
+        self._inputs = list(self._inputs)
+        self._outputs = list(self._outputs)
+        self._tags = list(self._tags)
 
     @cached_property
     def inputs(self) -> list[str]:
-        return self._inputs # TODO: Remove transcoding?
+        return self._inputs
 
     @cached_property
     def outputs(self) -> list[str]:
         return self._outputs
-
 
 class FusedPipeline(Pipeline):
     """Fused pipeline allows for wrapping nodes for execution by the underlying
