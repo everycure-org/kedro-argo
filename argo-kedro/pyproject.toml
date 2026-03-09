@@ -35,6 +35,12 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest",
+    "pandas",
+]
+
 [project.urls]
 Homepage = "https://github.com/everycure-org/argo-kedro"
 Repository = "https://github.com/everycure-org/argo-kedro"
