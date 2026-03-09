@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: {{ workflow_name }}-
+  name: {{ workflow_name }}-{{ random }}
   namespace: {{ namespace }}
 spec:
   workflowMetadata:

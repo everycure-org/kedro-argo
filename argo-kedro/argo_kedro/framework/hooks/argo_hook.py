@@ -1,49 +1,13 @@
 from logging import Logger, getLogger
 from typing import List, Optional
 
+from omegaconf import OmegaConf
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
 
-from pydantic import BaseModel, Field
-
-
-class RunnerConfig(BaseModel):
-    use_memory_datasets: bool = False
-
-class MachineType(BaseModel):
-    mem: int
-    cpu: int
-    num_gpu: int
-
-class DeploymentConfig(BaseModel):
-    image: str
-    tag: str = "latest"
-    target_platform: str = "linux/amd64"
-    context: str = "./"
-    dockerfile: str = "Dockerfile"
-
-class SecretRef(BaseModel):
-    name: str
-    key: str
-
-class EnvironmentRef(BaseModel):
-
-    name: str
-    secret_ref: SecretRef
-
-class TemplateConfig(BaseModel):
-
-    environment: List[EnvironmentRef] = Field(default=[])
-
-class ArgoConfig(BaseModel):
-    namespace: str
-    deployment: DeploymentConfig
-    machine_types: dict[str, MachineType]
-    default_machine_type: str
-    runner: RunnerConfig
-    template: Optional[TemplateConfig] = Field(default=TemplateConfig())
-
+from argo_kedro.config.resolvers import random
+from argo_kedro.config import ArgoConfig
 
 class ArgoHook:
     @property
@@ -61,6 +25,12 @@ class ArgoHook:
         Args:
             context: The context that was created.
         """
+
+        if not OmegaConf.has_resolver("ka.random_name"):
+            OmegaConf.register_new_resolver(
+                "ka.random", random, use_cache=True
+            )
+
         try:
             if "argo" not in context.config_loader.config_patterns.keys():
                 context.config_loader.config_patterns.update(
