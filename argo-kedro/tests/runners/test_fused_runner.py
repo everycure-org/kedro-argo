@@ -1,4 +1,5 @@
 import subprocess
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -9,6 +10,7 @@ from kedro.framework.project import pipelines as project_pipelines
 from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.pipeline import Pipeline, Node as KedroNode
+from kedro_datasets.pandas import CSVDataset
 from argo_kedro.pipeline import FusedPipeline, Node
 from argo_kedro.runners.fuse_runner import FusedRunner
 from argo_kedro.framework.cli.cli import (
@@ -65,12 +67,19 @@ def fused_pipeline_complex() -> Pipeline:
                 name="fused_modelling",
                 machine_type="n1-standard-8",
             ),
+            KedroNode(
+                func=lambda x: x,
+                inputs=["predictions"],
+                outputs="predictions_report",
+                tags=["predictions"],
+                name="create_predictions_report",
+            ),
         ]
     )
 
 
 @pytest.mark.parametrize("use_memory_datasets", [False, True])
-def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_complex: Pipeline, use_memory_datasets: bool):
+def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_complex: Pipeline, use_memory_datasets: bool, tmp_path: Path):
     
     # Given a pipeline and data catalog
     monkeypatch.setitem(project_pipelines, "fused_pipeline_complex", fused_pipeline_complex)
@@ -78,6 +87,12 @@ def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_comple
         {
             "raw_data": MemoryDataset(pd.DataFrame({"raw_data": [1, 2]})),
             "raw_customers": MemoryDataset(pd.DataFrame({"raw_customers": ["a", "b"]})),
+            
+            # NOTE: Used within the fused pipeline, should be removed if use_memory_datasets is True
+            "model": CSVDataset(filepath=tmp_path / "model.csv"),
+
+            # NOTE: Used outside of the fused pipeline, should not be removed
+            "predictions": CSVDataset(filepath=tmp_path / "predictions.csv"),
         }
     )
 
@@ -87,12 +102,10 @@ def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_comple
     )
 
     # When running the pipeline
-    runner.run(
-        pipeline=fused_pipeline_complex,
-        catalog=catalog,
-    )
-
+    runner.run(pipeline=fused_pipeline_complex, catalog=catalog)
 
     # Then results materialized correctly
     expected_predictions = pd.DataFrame({"raw_data": [1, 2]})
-    pd.testing.assert_frame_equal(catalog.load("predictions"), expected_predictions)
+    pd.testing.assert_frame_equal(catalog.load("predictions_report"), expected_predictions)
+    assert isinstance(catalog._datasets["predictions"], CSVDataset)
+    assert isinstance(catalog._datasets["model"], MemoryDataset if use_memory_datasets else CSVDataset)
