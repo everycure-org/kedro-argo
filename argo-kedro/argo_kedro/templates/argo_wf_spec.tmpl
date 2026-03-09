@@ -126,9 +126,11 @@ spec:
       - name: {{ task.name }}
         template: {{ task.get('template', 'kedro') }}
         dependencies:
+        {% if not task.deps %}
         {% for init_template in init_templates %}
           - {{ init_template.name }}
         {% endfor %}
+        {% endif %}
         {% for dep in task.deps %}
           - {{ dep }}
         {% endfor %}
