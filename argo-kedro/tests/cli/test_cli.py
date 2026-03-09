@@ -1,11 +1,16 @@
 import subprocess
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
 from click.testing import CliRunner
 
+from kedro.framework.project import pipelines as project_pipelines
+from kedro.framework.session import KedroSession
+from kedro.io import DataCatalog, MemoryDataset
 from kedro.pipeline import Pipeline, Node as KedroNode
 from argo_kedro.pipeline import FusedPipeline, Node
+from argo_kedro.runners.fuse_runner import FusedRunner
 from argo_kedro.framework.cli.cli import (
     get_argo_dag,
     get_failed_nodes,
@@ -107,8 +112,8 @@ def fused_pipeline_complex() -> Pipeline:
             FusedPipeline(
                 [
                     KedroNode(
-                        func=lambda x: x,
-                        inputs="data",
+                        func=lambda x, y: y,
+                        inputs=["raw_data", "data"],
                         outputs="model",
                         tags=["training"],
                         name="train_fun",
@@ -126,6 +131,36 @@ def fused_pipeline_complex() -> Pipeline:
             ),
         ]
     )
+
+
+def test_run_fused_pipeline_complex_cli(monkeypatch: pytest.MonkeyPatch, fused_pipeline_complex: Pipeline):
+    
+    # Given a pipeline and data catalog
+    monkeypatch.setitem(project_pipelines, "fused_pipeline_complex", fused_pipeline_complex)
+    catalog = DataCatalog(
+        {
+            "raw_data": MemoryDataset(pd.DataFrame({"raw_data": [1, 2]})),
+            "raw_customers": MemoryDataset(pd.DataFrame({"raw_customers": ["a", "b"]})),
+        }
+    )
+
+    runner = FusedRunner(
+        pipeline_name="fused_pipeline_complex",
+        use_memory_datasets=False,
+    )
+
+    # When running the pipeline
+    runner.run(
+        pipeline=fused_pipeline_complex,
+        catalog=catalog,
+    )
+
+    # Then the predictions dataset should be loaded
+    breakpoint()
+
+    # Then results materialized correctly
+    expected_predictions = pd.DataFrame({"raw_data": [1, 2]})
+    pd.testing.assert_frame_equal(catalog.load("predictions"), expected_predictions)
 
 
 def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str):
@@ -183,6 +218,7 @@ def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, M
     
 
 def test_get_argo_dag_fused_complex(fused_pipeline_complex: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str):
+
 
     # When generating the argo DAG
     argo_dag = get_argo_dag(fused_pipeline_complex, machine_types, default_machine_type)
