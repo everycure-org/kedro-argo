@@ -5,7 +5,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.10"
 name = "argo_test"
 readme = "README.md"
 dynamic = [
@@ -18,8 +18,8 @@ dependencies = [
     "kedro[jupyter]~=1.2.0",
     "kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, plotly-plotlydataset, plotly-jsondataset, matplotlib-matplotlibdataset]>=3.0",
     "kedro-viz>=6.7.0",
-    "scikit-learn~=1.5.1",
-    "seaborn~=0.13.2",
+    "scikit-learn",
+    "seaborn",
     "kubernetes",
     "argo-kedro",
     "gcsfs",
@@ -27,6 +27,7 @@ dependencies = [
     "pandas>=2.3.3",
     "proto-plus==1.24.0.dev1",
     "kedro-mlflow>=2.0.2",
+    "mlflow>=3.10.1",
 ]
 
 [tool.uv.sources]

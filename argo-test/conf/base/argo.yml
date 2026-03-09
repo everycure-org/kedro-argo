@@ -3,11 +3,11 @@ namespace: argo-workflows # cluster namespace to run on
 # To enable running on the cluster, Argo requires the plugin to be packaged
 # as a Docker image. This section defines the image to use.
 deployment:
-  image: your-registry/your-image  # Docker image to use for workflow execution
+  image: us-central1-docker.pkg.dev/ec-ai-platform-dev/ai-platform-images/lvi  # Docker image to use for workflow execution
   tag: ${ka.random:} # Will match the random string in the workflow name
   target_platform: linux/amd64  # Target platform for the image
-  context: ./  # Docker build context directory (relative to the Kedro project root)
-  dockerfile: Dockerfile  # Dockerfile path relative to the build context
+  context: ..  # Docker build context directory (relative to the Kedro project root)
+  dockerfile: ../Dockerfile  # Dockerfile path relative to the build context
 
 # Configuration passed to the runner
 runner:
@@ -103,10 +103,18 @@ template:
   # Section allows for including environment variables in the
   # node for execution, currently limited to secret references.
   environment:
-    - name: OPENAI_API_TOKEN
+    - name: MLFLOW_TRACKING_URI
       secret_ref:
-        name: secret_name
-        key: OPENAI_API_KEY
+        name: mlflow-oidc-credentials
+        key: url
+    - name: MLFLOW_TRACKING_USERNAME
+      secret_ref:
+        name: mlflow-oidc-credentials
+        key: username
+    - name: MLFLOW_TRACKING_PASSWORD
+      secret_ref:
+        name: mlflow-oidc-credentials
+        key: token
 
   # Custom templates to be used in the workflow
   templates:
@@ -136,7 +144,7 @@ template:
 
           mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
           mlflow.set_experiment(experiment)
-          run = mlflow.start_run(run_name=os.environ["MLFLOW_TRACKING_URI"])
+          run = mlflow.start_run(run_name=os.environ["WORKFLOW_ID"])
           with open("/tmp/mlflow_run_id", "w", encoding="utf-8") as f:
               f.write(run.info.run_id)
       outputs:
