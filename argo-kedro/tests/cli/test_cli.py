@@ -125,6 +125,13 @@ def fused_pipeline_complex() -> Pipeline:
                         tags=["predictions"],
                         name="create_predictions",
                     ),
+                    KedroNode(
+                        func=lambda x: x,
+                        inputs=["model"],
+                        outputs="report",
+                        tags=["predictions"],
+                        name="create_report",
+                    ),
                 ],
                 name="fused_modelling",
                 machine_type="n1-standard-8",
