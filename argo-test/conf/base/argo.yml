@@ -136,7 +136,7 @@ template:
 
           mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
           mlflow.set_experiment(experiment)
-          run = mlflow.start_run(run_name=os.getenv("WORKFLOW_ID", "dummy"))
+          run = mlflow.start_run(run_name=os.environ["MLFLOW_TRACKING_URI"])
           with open("/tmp/mlflow_run_id", "w", encoding="utf-8") as f:
               f.write(run.info.run_id)
       outputs:
