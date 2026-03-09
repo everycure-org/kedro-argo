@@ -433,14 +433,20 @@ def submit(
             namespace=context.argo.namespace,
             environment=environment,
             workflow_name=workflow_name,
-            random=random()
+            random=random(),
+            init_templates=[
+                template
+                for name in context.argo.template.init_templates
+                for template in context.argo.template.templates
+                if template.name == name
+            ]
         )
 
         # Load as yaml
         yaml_data = yaml.safe_load(rendered_template)
         yaml_without_anchors = yaml.dump(yaml_data, sort_keys=False, default_flow_style=False)
         save_argo_template(
-            yaml_without_anchors,
+            rendered_template,
         )
 
         if not dry_run:

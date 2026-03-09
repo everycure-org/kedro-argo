@@ -98,13 +98,39 @@ default_machine_type: default
 
 # Section allows for customizing the Workflow
 # template sent to Argo
-# template:
+template:
 
-#   # Section allows for including environment variables in the
-#   # node for execution, currently limited to secret references.
-#   environment:
-#     - name: OPENAI_API_TOKEN
-#       secret_ref:
-#         name: secret_name
-#         key: OPENAI_API_KEY
+  # Section allows for including environment variables in the
+  # node for execution, currently limited to secret references.
+  environment:
+    - name: OPENAI_API_TOKEN
+      secret_ref:
+        name: secret_name
+        key: OPENAI_API_KEY
+
+  # Custom templates to be used in the workflow
+  templates:
+    - name: init-mlflow-run
+      container:
+        name: init-mlflow-run
+        command: ["python", "-c"]
+        args: |
+          import os
+          import mlflow
+          mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+          mlflow.set_experiment(os.getenv("MLFLOW_EXPERIMENT_NAME", "gnn"))
+          run = mlflow.start_run(run_name=os.getenv("WORKFLOW_ID", "dummy"))
+          with open("/tmp/mlflow_run_id", "w", encoding="utf-8") as f:
+              f.write(run.info.run_id)
+      outputs:
+        parameters:
+          - name: mlflow_run_id
+            path: /tmp/mlflow_run_id
+
+  # Register templates to be executed before the main pipeline,
+  # all outputs of the init templates are passed as environment
+  # variables to each of the nodes of the pipeline, e.g., for the
+  # above configuration, each node gets an `MLFLOW_RUN_ID` environment
+  # variable that can be used within the node.
+  init_templates: ["init-mlflow-run"]
 
