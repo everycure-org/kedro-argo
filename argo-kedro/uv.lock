@@ -356,7 +356,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< HEAD:kedro-argo/uv.lock
 name = "kedro-argo"
 version = "0.1.0"
 source = { editable = "." }
@@ -374,8 +373,6 @@ requires-dist = [
 ]
 
 [[package]]
-=======
->>>>>>> refs/remotes/origin/main:argo-kedro/uv.lock
 name = "kedro-telemetry"
 version = "0.6.5"
 source = { registry = "https://pypi.org/simple" }
@@ -840,8 +837,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< HEAD:kedro-argo/uv.lock
-=======
 name = "websocket-client"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -851,7 +846,6 @@ wheels = [
 ]
 
 [[package]]
->>>>>>> refs/remotes/origin/main:argo-kedro/uv.lock
 name = "zipp"
 version = "3.23.0"
 source = { registry = "https://pypi.org/simple" }
