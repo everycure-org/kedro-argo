@@ -81,7 +81,7 @@ class FusedRunner(SequentialRunner):
 
                         if found:
                             print(f"{dataset} found as input to other pipeline node")
-                            outputs.append(dataset)
+                            outputs.update(dataset)
 
                     for dataset in pipeline.datasets().difference(pipeline.inputs().union(outputs)):
                         catalog._datasets[dataset] = MemoryDataset()

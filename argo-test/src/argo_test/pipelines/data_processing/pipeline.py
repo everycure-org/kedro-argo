@@ -22,12 +22,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                         name="preprocess_shuttles_node",
                     ),
                     Node(
-                        func=lambda x, y: x,
-                        inputs=["preprocessed_shuttles", "preprocessed_companies"],
-                        outputs=None,
-                        name="test_node",
-                    ),
-                    Node(
                         func=create_model_input_table,
                         inputs=["preprocessed_shuttles", "preprocessed_companies", "reviews"],
                         outputs="model_input_table",
