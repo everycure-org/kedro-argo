@@ -15,7 +15,7 @@ with KedroSession.create(
 ) as session:
 
     context = session.load_context()
-    experiment = context.mlflow.experiment # verify
+    experiment = context.mlflow.tracking.experiment.name
 
 mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
 mlflow.set_experiment(experiment)
