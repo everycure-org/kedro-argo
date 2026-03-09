@@ -21,6 +21,7 @@
   - [GPU support](#gpu-support)
   - [Fusing nodes for execution](#fusing-nodes-for-execution)
   - [Using cluster Secrets](#using-cluster-secrets)
+- [Known issues](#known-issues)
 - [Common errors](#common-errors)
 
 # How do I install argo-kedro?
@@ -335,6 +336,40 @@ This ensures that the underlying machine has access to the secret, next use the 
 
 openai_token: ${oc.env:TOKEN}
 ```
+
+# Known issues
+
+## Default pipeline with fusing for sub-pipelines
+
+Kedro's handles the `__default__` pipeline through auto-detection, given it's current implementation of the `sum` operator, the Fusing is ignored if the _full_ pipeline is wrapped in a `FusedPipeline` object. The current work-around is to wrap the pipeline in a `Pipeline` object. For instance:
+
+```python
+def create_pipeline(**kwargs) -> Pipeline:
+    return FusedPipeline(
+        [
+            ...
+        ],
+        name="fused_node"
+    )
+```
+
+Should become
+
+```python
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        FusedPipeline(
+            [
+                ...
+            ],
+            name="fused_node"
+        )
+    )
+```
+
+## Kedro run with node target within fusing boundary
+
+The current implementation of the fusing algorithm does not allow invocations of `kedro run` with a target node within the fuse boundary. The current work-around is to target the fused node in it's entirety. 
 
 # Common errors
 
