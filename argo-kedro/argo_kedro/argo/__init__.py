@@ -2,7 +2,7 @@ import re
 
 from kedro.pipeline import Pipeline
 
-from argo_kedro.framework.hooks.argo_hook import MachineType
+from argo_kedro.config.kedro_argo_config import MachineType
 from argo_kedro.pipeline.node import Node
 
 
