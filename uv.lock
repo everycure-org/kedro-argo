@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = "==3.11.*"
 
 [manifest]
@@ -131,11 +131,7 @@ wheels = [
 
 [[package]]
 name = "argo-kedro"
-<<<<<<< dependabot/uv/uv-d1091effbf
-version = "0.1.28"
-=======
-version = "0.1.30"
->>>>>>> main
+version = "0.1.31"
 source = { editable = "argo-kedro" }
 dependencies = [
     { name = "jinja2" },
