@@ -265,7 +265,7 @@ For our use-case, a pipeline with hundreds of nodes, we want to enable fusing se
 
 <sup>2</sup> Related here is used in the broad sense of the word, i.e., they may have similar hardware needs, are highly coupled, or all rely on an external service.
 
-## The `FusedPipeline` object
+### The `FusedPipeline` object
 
 The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
 
