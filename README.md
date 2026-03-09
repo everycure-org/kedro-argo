@@ -267,7 +267,7 @@ For our use-case, a pipeline with hundreds of nodes, we want to enable fusing se
 
 ### The `FusedPipeline` object
 
-The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
+The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same Argo task. See the following code example:
 
 ```python
 from kedro.pipeline import Pipeline
