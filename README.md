@@ -340,7 +340,9 @@ openai_token: ${oc.env:TOKEN}
 
 ## Templates and init templates
 
-The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. For instance:
+The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. Cluster secrets, as described above, are also available on these templates during runtime.
+
+For instance:
 
 ```yaml
   templates:
