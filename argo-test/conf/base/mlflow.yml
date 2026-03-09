@@ -35,7 +35,7 @@ tracking:
     pipelines: []
 
   experiment:
-    name: argo_test
+    name: ${oc.env:MLFLOW_EXPERIMENT_NAME, dummy} 
     create_experiment_kwargs: # will be used only if the experiment does not exist yet and is created.
       artifact_location: null # enable to specify an artifact location for the experiment different than the global one for the mlflow server
       tags: null  # a dict of tags for the experiment

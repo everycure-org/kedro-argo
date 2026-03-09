@@ -25,7 +25,8 @@ class SecretRef(BaseModel):
 class EnvironmentRef(BaseModel):
 
     name: str
-    secret_ref: SecretRef
+    secret_ref: SecretRef | None = None
+    value: str | None = None
 
 class TemplateOutputRef(BaseModel):
     name: str

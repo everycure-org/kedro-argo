@@ -25,10 +25,14 @@ spec:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
       {% for env in template.environment %}
         - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
           valueFrom:
             secretKeyRef:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: {{ env.value }}
+          {% endif %}
       {% endfor %}
       command: {{ tmpl.container.command }}
       args:
@@ -87,10 +91,14 @@ spec:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
       {% for env in template.environment %}
         - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
           valueFrom:
             secretKeyRef:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: {{ env.value }}
+          {% endif %}
       {% endfor %}
       {% for init_template in init_templates %}
         {% for output in init_template.outputs.parameters %}
