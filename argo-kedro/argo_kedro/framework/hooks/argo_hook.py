@@ -1,20 +1,9 @@
-
-import os
-import re
 from logging import Logger, getLogger
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Any, Union, List, Optional
+from typing import List, Optional
 
 from kedro.config import MissingConfigException
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
-from kedro.framework.startup import _get_project_metadata
-from kedro.io import CatalogProtocol, DataCatalog
-from kedro.pipeline import Pipeline
-from kedro.pipeline.node import Node
-from omegaconf import OmegaConf
-
 
 from pydantic import BaseModel, Field
 
@@ -32,6 +21,7 @@ class DeploymentConfig(BaseModel):
     tag: str = "latest"
     target_platform: str = "linux/amd64"
     context: str = "./"
+    dockerfile: str = "Dockerfile"
 
 class SecretRef(BaseModel):
     name: str
