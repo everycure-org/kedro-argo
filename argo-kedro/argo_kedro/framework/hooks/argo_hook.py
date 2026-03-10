@@ -26,7 +26,7 @@ class ArgoHook:
             context: The context that was created.
         """
 
-        if not OmegaConf.has_resolver("ka.random_name"):
+        if not OmegaConf.has_resolver("ka.random"):
             OmegaConf.register_new_resolver(
                 "ka.random", random, use_cache=True
             )

@@ -11,7 +11,9 @@ ENV TZ=UTC
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
-    curl && \
+    curl \
+    git \
+    build-essential && \
     update-ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -24,15 +26,15 @@ COPY pyproject.toml .
 COPY uv.lock .
 COPY argo-kedro ./argo-kedro
 COPY argo-test/pyproject.toml ./argo-test/
-COPY argo-test/uv.lock ./argo-test/
 
-# Sync from the argo-test directory (which references argo-kedro via workspace)
-WORKDIR /app/argo-test
-RUN uv sync --frozen --no-install-project
+# Sync argo-test from the workspace lockfile
+RUN uv sync --frozen --project /app/argo-test --no-install-project
 
 # Copy remaining project files
-COPY argo-test ./
+COPY argo-test ./argo-test
 
-RUN uv sync --frozen
+RUN uv sync --frozen --project /app/argo-test
 
-ENV PATH=/app/argo-test/.venv/bin:$PATH
+ENV PATH=/app/.venv/bin:$PATH
+
+WORKDIR /app/argo-test

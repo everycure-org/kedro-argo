@@ -2,7 +2,7 @@
 name = "kedro-argo-workspace"
 version = "0.1.0"
 description = "Workspace for kedro-argo development"
-requires-python = ">=3.11"
+requires-python = "==3.12.*"
 
 [tool.uv.workspace]
 members = ["argo-kedro", "argo-test"]

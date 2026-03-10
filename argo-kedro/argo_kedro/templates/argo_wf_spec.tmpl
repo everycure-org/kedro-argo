@@ -10,6 +10,42 @@ spec:
       plugin: argo-kedro 
   entrypoint: "pipeline"
   templates:
+  {% for tmpl in template.templates %}
+  - name: {{ tmpl.name }}
+    metadata:
+      labels:
+        app: argo-kedro
+    container:
+      image: {{ image }}
+      imagePullPolicy: Always
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      {% for env in template.environment %}
+        - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
+          valueFrom:
+            secretKeyRef:
+              name: {{ env.secret_ref.name }}
+              key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: {{ env.value }}
+          {% endif %}
+      {% endfor %}
+      command: {{ tmpl.container.command }}
+      args:
+      - |-
+{{ tmpl.container.args | indent(10, true) }}
+    outputs:
+      parameters:
+        {% for param in tmpl.outputs.parameters %}
+        - name: {{ param.name }}
+          valueFrom:
+            path: {{ param.path }}
+        {% endfor %}
+  {% endfor %}
   - name: kedro
     metadata:
       labels:
@@ -21,6 +57,11 @@ spec:
       - name: mem
       - name: cpu
       - name: num_gpu
+      {% for init_template in init_templates %}
+        {% for output in init_template.outputs.parameters %}
+      - name: {{ output.name }}
+        {% endfor %}
+      {% endfor %}
     podSpecPatch: |
       containers:
         - name: main
@@ -50,10 +91,20 @@ spec:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
       {% for env in template.environment %}
         - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
           valueFrom:
             secretKeyRef:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: {{ env.value }}
+          {% endif %}
+      {% endfor %}
+      {% for init_template in init_templates %}
+        {% for output in init_template.outputs.parameters %}
+        - name: {{ output.name | upper }}
+          value: "{{ '{{inputs.parameters.' ~ output.name ~ '}}' }}"
+        {% endfor %}
       {% endfor %}
       args:
       - "run"
@@ -67,15 +118,22 @@ spec:
   - name: pipeline
     dag:
       tasks:
+      {% for init_template in init_templates %}
+      - name: {{ init_template.name }}
+        template: {{ init_template.name }}
+      {% endfor %}
       {% for task in pipeline_tasks %}
       - name: {{ task.name }}
         template: {{ task.get('template', 'kedro') }}
-        {% if task.deps %}
         dependencies:
+        {% if not task.deps %}
+        {% for init_template in init_templates %}
+          - {{ init_template.name }}
+        {% endfor %}
+        {% endif %}
         {% for dep in task.deps %}
           - {{ dep }}
         {% endfor %}
-        {% endif %}
         {% if task.num_gpu > 0 %}
         podSpecPatch: |
           tolerations:
@@ -95,4 +153,10 @@ spec:
             value: {{ task.mem }}
           - name: cpu
             value: {{ task.cpu }}
+          {% for init_template in init_templates %}
+            {% for output in init_template.outputs.parameters %}
+          - name: {{ output.name }}
+            value: "{{ '{{tasks.' ~ init_template.name ~ '.outputs.parameters.mlflow_run_id}}' }}"
+            {% endfor %}
+          {% endfor %}
       {% endfor %}

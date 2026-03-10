@@ -21,6 +21,7 @@
   - [GPU support](#gpu-support)
   - [Fusing nodes for execution](#fusing-nodes-for-execution)
   - [Using cluster Secrets](#using-cluster-secrets)
+  - [Templates and init templates](#templates-and-init-templates)
 - [Known issues](#known-issues)
 - [Common errors](#common-errors)
 
@@ -264,9 +265,9 @@ For our use-case, a pipeline with hundreds of nodes, we want to enable fusing se
 
 <sup>2</sup> Related here is used in the broad sense of the word, i.e., they may have similar hardware needs, are highly coupled, or all rely on an external service.
 
-## The `FusedPipeline` object
+### The `FusedPipeline` object
 
-The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same machine. See the following code example:
+The `FusedPipeline` is an extension of Kedro's `Pipeline` object, that guarantees that the nodes contained within it are executed on the same Argo task. See the following code example:
 
 ```python
 from kedro.pipeline import Pipeline
@@ -312,7 +313,7 @@ The code snippet above wraps the `preprocess_companies_node` and `preprocess_shu
 
 ## Using cluster Secrets
 
-Workflows are allowed to consuming secrets provided by the cluster. Secrets can be mounted using the `template` section of the `argo.yml` file.
+Workflows are allowed to consume secrets provided by the cluster. Secrets can be mounted using the `template` section of the `argo.yml` file.
 
 ```yaml
 # argo.yml
@@ -329,7 +330,7 @@ template:
         key: TOKEN
 ```
 
-This ensures that the underlying machine has access to the secret, next use the `oc.env` resolver to pull the secret in the globals, catalog or parameters, as follows:
+This ensures that the pods running the workflow nodes have access to the secret, next use the `oc.env` resolver to pull the secret in the globals, catalog or parameters, as follows:
 
 ```yml
 # base/globals.yml
@@ -337,11 +338,43 @@ This ensures that the underlying machine has access to the secret, next use the 
 openai_token: ${oc.env:TOKEN}
 ```
 
+## Templates and init templates
+
+The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. Cluster secrets, as described above, are also available on these templates during runtime.
+
+For instance:
+
+```yaml
+  templates:
+    - name: init-mlflow-run
+      container:
+        name: init-mlflow-run
+        command: ["python", "-c"]
+        args: |
+          import os
+          import mlflow
+
+          mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+          mlflow.set_experiment(os.environ["MLFLOW_EXPERIMENT_NAME"])
+          run = mlflow.start_run(run_name=os.environ["WORKFLOW_ID"])
+          with open("/tmp/mlflow_run_id", "w", encoding="utf-8") as f:
+              f.write(run.info.run_id)
+      outputs:
+        parameters:
+          - name: mlflow_run_id
+            path: /tmp/mlflow_run_id
+```
+
+Moreover, a template can optionally be listed as an `init_templates`. This has the following effect:
+
+1. The template is ran _before_ the tasks that represent the Kedro pipeline
+2. All template outputs are passed to the tasks of the pipeline, and mounted as environment variables.
+
 # Known issues
 
 ## Default pipeline with fusing for sub-pipelines
 
-Kedro's handles the `__default__` pipeline through auto-detection, given it's current implementation of the `sum` operator, the Fusing is ignored if the _full_ pipeline is wrapped in a `FusedPipeline` object. The current work-around is to wrap the pipeline in a `Pipeline` object. For instance:
+Kedro handles the `__default__` pipeline through auto-detection, given it's current implementation of the `sum` operator, the Fusing is ignored if the _full_ pipeline is wrapped in a `FusedPipeline` object. The current work-around is to wrap the pipeline in a `Pipeline` object. For instance:
 
 ```python
 def create_pipeline(**kwargs) -> Pipeline:

@@ -25,11 +25,35 @@ class SecretRef(BaseModel):
 class EnvironmentRef(BaseModel):
 
     name: str
-    secret_ref: SecretRef
+    secret_ref: SecretRef | None = None
+    value: str | None = None
+
+class TemplateOutputRef(BaseModel):
+    name: str
+    path: str
+
+class TemplateOutputsPathsRef(BaseModel):
+    name: str
+    outputs: List[TemplateOutputRef]
+
+class TemplateOutputsRef(BaseModel):
+    parameters: List[TemplateOutputRef]
+
+class TemplateContainerRef(BaseModel):
+    name: str
+    command: List[str]
+    args: str
+
+class TemplateRef(BaseModel):
+    name: str
+    container: TemplateContainerRef
+    outputs: TemplateOutputsRef
 
 class TemplateConfig(BaseModel):
 
+    templates: List[TemplateRef] = Field(default=[])
     environment: List[EnvironmentRef] = Field(default=[])
+    init_templates: List[str] = Field(default=[])
 
 class ArgoConfig(BaseModel):
     namespace: str
