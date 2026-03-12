@@ -10,7 +10,13 @@ class FusedNode(Node):
     allowing it to act as a single unit for execution.
     """
 
-    def __init__(self, nodes: List[KedroNode], name: str, machine_type: str | None = None):
+    def __init__(
+        self, 
+        nodes: List[KedroNode], 
+        name: str, 
+        machine_type: str | None = None,
+        template: str | None = None
+    ):
         self._nodes = nodes
         self._name = name
         self._namespace = None
@@ -20,6 +26,7 @@ class FusedNode(Node):
         self._func = lambda: None
         self._tags = set()
         self._machine_type = machine_type
+        self._template = template
 
         for node in nodes:
             self._inputs.update(node.inputs)
@@ -35,6 +42,14 @@ class FusedNode(Node):
     @cached_property
     def inputs(self) -> list[str]:
         return self._inputs
+
+    @property
+    def machine_type(self) -> str:
+        return self._machine_type
+
+    @property
+    def template(self) -> str:
+        return self._template
 
     @cached_property
     def outputs(self) -> list[str]:
@@ -55,14 +70,16 @@ class FusedPipeline(Pipeline):
         *,
         tags: str | Iterable[str] | None = None,
         machine_type: str | None = None,
+        template: str | None = None
     ):
         self._name = name
         self._machine_type = machine_type
+        self._template = template
         super().__init__(nodes, tags=tags)
 
     @property
     def nodes(self) -> list[KedroNode]:
-        return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]
+        return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type, template=self._template)]
 
     @cached_property
     def grouped_nodes(self) -> list[list[KedroNode]]:
@@ -71,4 +88,4 @@ class FusedPipeline(Pipeline):
         For FusedPipeline, since we only have a single FusedNode, we return
         it as a single group.
         """
-        return [[FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]]
+        return [[FusedNode(self._nodes, name=self._name, machine_type=self._machine_type, template=self._template)]]

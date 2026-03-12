@@ -418,16 +418,17 @@ def submit(
         pipeline_tasks = get_argo_dag(
             kedro_pipelines[pipeline], 
             machine_types=context.argo.machine_types,
-            default_machine_type=context.argo.default_machine_type
+            default_machine_type=context.argo.default_machine_type,
+            template_config=context.argo.template
         )
-
+        
         # Render the template
         click.echo("Rendering Argo workflow spec...")
         rendered_template = render_jinja_template(
             src=ARGO_TEMPLATES_DIR_PATH / "argo_wf_spec.tmpl",
             trim_blocks=True,
             lstrip_blocks=True,
-            pipeline_tasks=[task.to_dict() for task in pipeline_tasks.values()],
+            pipeline_tasks=[task for task in pipeline_tasks.values()],
             template=context.argo.template if context.argo.template else TemplateConfig(),
             pipeline_name=pipeline,
             image=image,

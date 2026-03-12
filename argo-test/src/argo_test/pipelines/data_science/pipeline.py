@@ -1,5 +1,5 @@
-from kedro.pipeline import Node, Pipeline
-from argo_kedro.pipeline import FusedPipeline
+from kedro.pipeline import Pipeline
+from argo_kedro.pipeline import FusedPipeline, Node
 
 from .nodes import evaluate_model, split_data, train_model
 
@@ -27,6 +27,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="evaluate_model_node",
                 ),
             ],
-            name="data_science_fused"
+            name="data_science_fused",
+            template="neo4j"
         )
     )
