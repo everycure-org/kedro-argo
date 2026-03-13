@@ -25,7 +25,7 @@ from argo_kedro.framework.cli.cli import (
 def machine_types() -> dict[str, MachineType]:
     return {
         "n1-standard-4": MachineType(mem=16, cpu=4, num_gpu=0),
-        "n1-standard-8": MachineType(mem=16, cpu=8, num_gpu=0),
+        "n1-standard-8": MachineType(mem=16, cpu=8, num_gpu=0, emph_storage=100),
         "gpu-node": MachineType(mem=32, cpu=8, num_gpu=1),
     }
 
@@ -121,7 +121,7 @@ def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType],
             "cpu": 8,
             "num_gpu": 0,
             "template": "custom_template",
-            "emph_storage": 0,
+            "emph_storage": 100,
         }
     }
 
@@ -152,7 +152,7 @@ def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, M
             "cpu": 8,
             "num_gpu": 0,   
             "template": "kedro",
-            "emph_storage": 0,
+            "emph_storage": 100,
         }
     }
 
