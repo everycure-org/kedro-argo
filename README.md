@@ -374,30 +374,25 @@ Moreover, a template can optionally be listed as an `init_templates`. This has t
 
 ## Default pipeline with fusing for sub-pipelines
 
-Kedro handles the `__default__` pipeline through auto-detection, given it's current implementation of the `sum` operator, the Fusing is ignored if the _full_ pipeline is wrapped in a `FusedPipeline` object. The current work-around is to wrap the pipeline in a `Pipeline` object. For instance:
+Kedro handles the `__default__` pipeline through auto-detection, given it's current implementation of the `sum` operator, the Fusing is ignored if the _full_ pipeline is wrapped in a `FusedPipeline` object. The current work-around is to use the `sum_pipelines` function from the package to build the default pipeline, i.e.,
 
 ```python
-def create_pipeline(**kwargs) -> Pipeline:
-    return FusedPipeline(
-        [
-            ...
-        ],
-        name="fused_node"
-    )
-```
+from kedro.framework.project import find_pipelines
+from kedro.pipeline import Pipeline
 
-Should become
+from argo_kedro.pipeline import sum_pipelines
 
-```python
-def create_pipeline(**kwargs) -> Pipeline:
-    return Pipeline(
-        FusedPipeline(
-            [
-                ...
-            ],
-            name="fused_node"
-        )
-    )
+
+def register_pipelines() -> dict[str, Pipeline]:
+    """Register the project's pipelines.
+
+    Returns:
+        A mapping from pipeline names to ``Pipeline`` objects.
+    """
+    pipelines = find_pipelines()
+    pipelines["__default__"] = sum_pipelines(pipelines.values())
+    return pipelines
+
 ```
 
 ## Kedro run with node target within fusing boundary
