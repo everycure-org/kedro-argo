@@ -33,7 +33,7 @@ class ArgoTask:
 
     @property
     def deps(self) -> list[str]:
-        return [clean_name(parent.name) for parent in sorted(self._parents)],
+        return [clean_name(parent.name) for parent in sorted(self._parents)]
 
     def add_parents(self, nodes: list[Node]):
         self._parents.extend(nodes)
