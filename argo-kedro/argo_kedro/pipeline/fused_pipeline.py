@@ -1,8 +1,14 @@
+from itertools import chain
 from typing import Iterable, List
 from kedro.pipeline import Pipeline
 from functools import cached_property
 from argo_kedro.pipeline.node import Node
 from kedro.pipeline.node import Node as KedroNode
+
+def sum_pipelines(pipelines: Iterable[Pipeline]) -> Pipeline:
+    """Sum a list of fused pipelines into a single fused pipeline.
+    """
+    return Pipeline(list(chain.from_iterable(p.nodes for p in pipelines)))
 
 class FusedNode(Node):
     """FusedNode is an extension of Kedro's internal node. The FusedNode
