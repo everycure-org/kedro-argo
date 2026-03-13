@@ -28,6 +28,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
             ],
             name="data_science_fused",
-            template="neo4j"
         )
     )
