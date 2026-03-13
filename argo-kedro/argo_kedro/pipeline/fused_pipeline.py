@@ -61,6 +61,20 @@ class FusedNode(Node):
     def outputs(self) -> list[str]:
         return self._outputs
 
+    def _copy(self, **overwrite_params) -> "FusedNode":
+        """Copy fused node while preserving the fused type."""
+        params = {
+            "nodes": overwrite_params.pop("nodes", self._nodes),
+            "name": overwrite_params.pop("name", self._name),
+            "machine_type": overwrite_params.pop("machine_type", self._machine_type),
+        }
+        copied_node = FusedNode(**params)
+
+        if "tags" in overwrite_params:
+            copied_node._tags = list(overwrite_params["tags"])
+
+        return copied_node
+
 class FusedPipeline(Pipeline):
     """Fused pipeline allows for wrapping nodes for execution by the underlying
     pipeline execution framework.
