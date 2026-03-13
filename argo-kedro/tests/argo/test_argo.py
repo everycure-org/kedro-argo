@@ -18,15 +18,22 @@ from argo_kedro.framework.cli.cli import (
     _get_workflow_image,
     resubmit,
     MachineType,
+    TemplateConfig,
 )
 
 @pytest.fixture
 def machine_types() -> dict[str, MachineType]:
     return {
         "n1-standard-4": MachineType(mem=16, cpu=4, num_gpu=0),
-        "n1-standard-8": MachineType(mem=16, cpu=8, num_gpu=0),
+        "n1-standard-8": MachineType(mem=16, cpu=8, num_gpu=0, emph_storage=100),
         "gpu-node": MachineType(mem=32, cpu=8, num_gpu=1),
     }
+
+
+@pytest.fixture
+def template_config() -> dict[str, MachineType]:
+    return TemplateConfig()
+
 
 @pytest.fixture
 def default_machine_type() -> str:
@@ -50,6 +57,7 @@ def pipeline() -> Pipeline:
                 tags=["training"],
                 name="train_fun",
                 machine_type="n1-standard-8",
+                template="custom_template",
             ),
         ]
     )
@@ -90,10 +98,10 @@ def fused_pipeline() -> Pipeline:
     )
 
 
-def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str):
+def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str, template_config: TemplateConfig):
 
     # When generating the argo DAG
-    argo_dag = get_argo_dag(pipeline, machine_types, default_machine_type)
+    argo_dag = get_argo_dag(pipeline, machine_types, default_machine_type, template_config)
     expected = {
         "preprocess_fun": { 
             "name": "preprocess-fun",
@@ -102,6 +110,8 @@ def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType],
             "mem": 16,
             "cpu": 4,
             "num_gpu": 0,
+            "template": "kedro",
+            "emph_storage": 0,
         },
         "train_fun": {
             "name": "train-fun",
@@ -110,6 +120,8 @@ def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType],
             "mem": 16,
             "cpu": 8,
             "num_gpu": 0,
+            "template": "custom_template",
+            "emph_storage": 100,
         }
     }
 
@@ -117,10 +129,10 @@ def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType],
     assert {key: task.to_dict() for key,task in argo_dag.items()} == expected
 
 
-def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str):
+def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, MachineType], default_machine_type: str, template_config: TemplateConfig):
 
     # When generating the argo DAG
-    argo_dag = get_argo_dag(fused_pipeline, machine_types, default_machine_type)
+    argo_dag = get_argo_dag(fused_pipeline, machine_types, default_machine_type, template_config)
     expected = {
         "preprocess_fun": { 
             "name": "preprocess-fun",
@@ -129,6 +141,8 @@ def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, M
             "mem": 32,
             "cpu": 8,
             "num_gpu": 1,
+            "template": "kedro",
+            "emph_storage": 0,
         },
         "fused_modelling": {
             "name": "fused-modelling",
@@ -136,7 +150,9 @@ def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, M
             "deps": ["preprocess-fun"],
             "mem": 16,
             "cpu": 8,
-            "num_gpu": 0,
+            "num_gpu": 0,   
+            "template": "kedro",
+            "emph_storage": 100,
         }
     }
 

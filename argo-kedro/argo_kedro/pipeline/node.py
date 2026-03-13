@@ -14,6 +14,7 @@ class Node(KedroNode):
         *,
         name: str | None = None,
         machine_type: str | None = None,
+        template: str | None = None,
         tags: str | Iterable[str] | None = None,
         confirms: str | list[str] | None = None,
         namespace: str | None = None,
@@ -21,10 +22,15 @@ class Node(KedroNode):
 
         super().__init__(func, inputs, outputs, name=name, tags=tags, confirms=confirms, namespace=namespace)
         self._machine_type = machine_type
+        self._template = template
 
     @property
     def machine_type(self) -> str:
         return self._machine_type
+
+    @property
+    def template(self) -> str:
+        return self._template
 
     def _copy(self, **overwrite_params: Any) -> "Node":
         """Copy node while preserving Argo-specific metadata.

@@ -1,8 +1,14 @@
+from itertools import chain
 from typing import Iterable, List
 from kedro.pipeline import Pipeline
 from functools import cached_property
 from argo_kedro.pipeline.node import Node
 from kedro.pipeline.node import Node as KedroNode
+
+def sum_pipelines(pipelines: Iterable[Pipeline]) -> Pipeline:
+    """Sum a list of fused pipelines into a single fused pipeline.
+    """
+    return Pipeline(list(chain.from_iterable(p.nodes for p in pipelines)))
 
 class FusedNode(Node):
     """FusedNode is an extension of Kedro's internal node. The FusedNode
@@ -10,7 +16,13 @@ class FusedNode(Node):
     allowing it to act as a single unit for execution.
     """
 
-    def __init__(self, nodes: List[KedroNode], name: str, machine_type: str | None = None):
+    def __init__(
+        self, 
+        nodes: List[KedroNode], 
+        name: str, 
+        machine_type: str | None = None,
+        template: str | None = None
+    ):
         self._nodes = nodes
         self._name = name
         self._namespace = None
@@ -20,6 +32,7 @@ class FusedNode(Node):
         self._func = lambda: None
         self._tags = set()
         self._machine_type = machine_type
+        self._template = template
 
         for node in nodes:
             self._inputs.update(node.inputs)
@@ -36,9 +49,31 @@ class FusedNode(Node):
     def inputs(self) -> list[str]:
         return self._inputs
 
+    @property
+    def machine_type(self) -> str:
+        return self._machine_type
+
+    @property
+    def template(self) -> str:
+        return self._template
+
     @cached_property
     def outputs(self) -> list[str]:
         return self._outputs
+
+    def _copy(self, **overwrite_params) -> "FusedNode":
+        """Copy fused node while preserving the fused type."""
+        params = {
+            "nodes": overwrite_params.pop("nodes", self._nodes),
+            "name": overwrite_params.pop("name", self._name),
+            "machine_type": overwrite_params.pop("machine_type", self._machine_type),
+        }
+        copied_node = FusedNode(**params)
+
+        if "tags" in overwrite_params:
+            copied_node._tags = list(overwrite_params["tags"])
+
+        return copied_node
 
 class FusedPipeline(Pipeline):
     """Fused pipeline allows for wrapping nodes for execution by the underlying
@@ -55,14 +90,16 @@ class FusedPipeline(Pipeline):
         *,
         tags: str | Iterable[str] | None = None,
         machine_type: str | None = None,
+        template: str | None = None
     ):
         self._name = name
         self._machine_type = machine_type
+        self._template = template
         super().__init__(nodes, tags=tags)
 
     @property
     def nodes(self) -> list[KedroNode]:
-        return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]
+        return [FusedNode(self._nodes, name=self._name, machine_type=self._machine_type, template=self._template)]
 
     @cached_property
     def grouped_nodes(self) -> list[list[KedroNode]]:
@@ -71,4 +108,4 @@ class FusedPipeline(Pipeline):
         For FusedPipeline, since we only have a single FusedNode, we return
         it as a single group.
         """
-        return [[FusedNode(self._nodes, name=self._name, machine_type=self._machine_type)]]
+        return [[FusedNode(self._nodes, name=self._name, machine_type=self._machine_type, template=self._template)]]

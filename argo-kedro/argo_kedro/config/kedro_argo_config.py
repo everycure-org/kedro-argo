@@ -10,6 +10,7 @@ class MachineType(BaseModel):
     mem: int
     cpu: int
     num_gpu: int
+    emph_storage: int = Field(default=0)
 
 class DeploymentConfig(BaseModel):
     image: str
@@ -54,6 +55,8 @@ class TemplateConfig(BaseModel):
     templates: List[TemplateRef] = Field(default=[])
     environment: List[EnvironmentRef] = Field(default=[])
     init_templates: List[str] = Field(default=[])
+    emph_storage_mount_path: str = Field(default="/data")
+    default_template: str = Field(default="kedro")
 
 class ArgoConfig(BaseModel):
     namespace: str

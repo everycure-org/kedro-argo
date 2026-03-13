@@ -57,12 +57,22 @@ spec:
       - name: mem
       - name: cpu
       - name: num_gpu
+      - name: emph_storage
       {% for init_template in init_templates %}
         {% for output in init_template.outputs.parameters %}
       - name: {{ output.name }}
         {% endfor %}
       {% endfor %}
     podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.emph_storage}}Gi"
       containers:
         - name: main
           resources:
@@ -80,6 +90,9 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
               {% endraw %}
+          volumeMounts:
+            - name: scratch
+              mountPath: {{ emph_storage_mount_path }}
     container:
       image: {{ image }}
       command: ["kedro"]
@@ -124,7 +137,7 @@ spec:
       {% endfor %}
       {% for task in pipeline_tasks %}
       - name: {{ task.name }}
-        template: {{ task.get('template', 'kedro') }}
+        template: {{ task.template }}
         dependencies:
         {% if not task.deps %}
         {% for init_template in init_templates %}
@@ -134,7 +147,7 @@ spec:
         {% for dep in task.deps %}
           - {{ dep }}
         {% endfor %}
-        {% if task.num_gpu > 0 %}
+        {% if task.machine_type.num_gpu > 0 %}
         podSpecPatch: |
           tolerations:
             - key: "nvidia.com/gpu"
@@ -146,13 +159,15 @@ spec:
           - name: pipeline
             value: {{ pipeline_name }}
           - name: kedro_nodes
-            value: {{ task.nodes }}
+            value: {{ task.node.name }}
           - name: num_gpu
-            value: {{ task.num_gpu }}
+            value: {{ task.machine_type.num_gpu }}
           - name: mem
-            value: {{ task.mem }}
+            value: {{ task.machine_type.mem }}
           - name: cpu
-            value: {{ task.cpu }}
+            value: {{ task.machine_type.cpu }}
+          - name: emph_storage
+            value: {{ task.machine_type.emph_storage }}
           {% for init_template in init_templates %}
             {% for output in init_template.outputs.parameters %}
           - name: {{ output.name }}
