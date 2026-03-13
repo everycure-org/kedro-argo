@@ -10,7 +10,7 @@ class MachineType(BaseModel):
     mem: int
     cpu: int
     num_gpu: int
-    emph_storage: int = Field(default=0)
+    emph_storage: int = Field(default=10)
 
 class DeploymentConfig(BaseModel):
     image: str
