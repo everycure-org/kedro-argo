@@ -38,6 +38,18 @@ class ArgoTask:
     def add_parents(self, nodes: list[Node]):
         self._parents.extend(nodes)
 
+    def to_dict(self) -> dict:
+        return {
+            "name": clean_name(self._node.name),
+            "nodes": self._node.name,
+            "deps": [clean_name(parent.name) for parent in sorted(self._parents)],
+            "mem": self._machine_type.mem,
+            "cpu": self._machine_type.cpu,
+            "num_gpu": self._machine_type.num_gpu,
+            "template": self._template,
+            "emph_storage": self._machine_type.emph_storage,
+        }
+
 
 def get_argo_dag(
     pipeline: Pipeline,
