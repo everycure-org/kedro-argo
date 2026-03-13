@@ -111,7 +111,7 @@ def test_get_argo_dag(pipeline: Pipeline, machine_types: dict[str, MachineType],
             "cpu": 4,
             "num_gpu": 0,
             "template": "kedro",
-            "emph_storage": 0,
+            "emph_storage": 10,
         },
         "train_fun": {
             "name": "train-fun",
@@ -142,7 +142,7 @@ def test_get_argo_dag_fused(fused_pipeline: Pipeline, machine_types: dict[str, M
             "cpu": 8,
             "num_gpu": 1,
             "template": "kedro",
-            "emph_storage": 0,
+            "emph_storage": 10,
         },
         "fused_modelling": {
             "name": "fused-modelling",
