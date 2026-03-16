@@ -92,7 +92,7 @@ spec:
               {% endraw %}
           volumeMounts:
             - name: scratch
-              mountPath: {{ emph_storage_mount_path }}
+              mountPath: {{ template.emph_storage_mount_path }}
     container:
       image: {{ image }}
       command: ["kedro"]
