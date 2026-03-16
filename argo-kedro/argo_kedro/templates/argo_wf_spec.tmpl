@@ -73,6 +73,7 @@ spec:
                   resources:
                     requests:
                       storage: {% raw %}"{{inputs.parameters.emph_storage}}Gi"
+                      {% endraw %}
       containers:
         - name: main
           resources:
