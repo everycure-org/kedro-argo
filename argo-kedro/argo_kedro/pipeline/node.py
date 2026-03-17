@@ -15,7 +15,6 @@ class Node(KedroNode):
         name: str | None = None,
         machine_type: str | None = None,
         template: str | None = None,
-        retries: int | None = None,
         tags: str | Iterable[str] | None = None,
         confirms: str | list[str] | None = None,
         namespace: str | None = None,
@@ -24,7 +23,6 @@ class Node(KedroNode):
         super().__init__(func, inputs, outputs, name=name, tags=tags, confirms=confirms, namespace=namespace)
         self._machine_type = machine_type
         self._template = template
-        self._retries = retries
 
     @property
     def machine_type(self) -> str:
@@ -33,10 +31,6 @@ class Node(KedroNode):
     @property
     def template(self) -> str:
         return self._template
-
-    @property
-    def retries(self) -> int | None:
-        return self._retries
 
     def _copy(self, **overwrite_params: Any) -> "Node":
         """Copy node while preserving Argo-specific metadata.
@@ -54,7 +48,6 @@ class Node(KedroNode):
             "confirms": self._confirms,
             "machine_type": self._machine_type,
             "template": self._template,
-            "retries": self._retries,
         }
         params.update(overwrite_params)
         return Node(**params)
