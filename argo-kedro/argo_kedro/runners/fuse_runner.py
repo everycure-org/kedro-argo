@@ -84,7 +84,6 @@ class FusedRunner(SequentialRunner):
                             outputs.add(dataset)
 
                     for dataset in pipeline.datasets().difference(pipeline.inputs().union(outputs)):
-                        breakpoint()
                         catalog._datasets[dataset] = MemoryDataset()
 
         # Invoke super runner
