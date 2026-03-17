@@ -167,6 +167,8 @@ template:
               mount_path: /licenses
               read_only: true
           env:
+          - name: NEO4J_HOST
+            value: "bolt://127.0.0.1:7687"
           - name: NEO4J_apoc_export_file_enabled
             value: "true"
           - name: NEO4J_apoc_import_file_enabled

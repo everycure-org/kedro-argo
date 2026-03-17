@@ -154,8 +154,15 @@ spec:
       {% endfor %}
       env:
       {% for env in sidecar.env %}
-      - name: {{ env.name }}
-        value: '{{ env.value | replace("'", "''") }}'
+        - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
+          valueFrom:
+            secretKeyRef:
+              name: {{ env.secret_ref.name }}
+              key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: '{{ env.value | replace("'", "''") }}'
+          {% endif %}
       {% endfor %}
     {% endfor %}
     volumes:
