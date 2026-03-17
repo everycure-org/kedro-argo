@@ -12,6 +12,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs="companies",
                 outputs="preprocessed_companies",
                 name="preprocess_companies_node",
+                template="neo4j",
             ),
             FusedPipeline(
                 [

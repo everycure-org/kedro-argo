@@ -28,6 +28,7 @@ class EnvironmentRef(BaseModel):
     name: str
     secret_ref: SecretRef | None = None
     value: str | None = None
+    escape: bool = False
 
 class TemplateOutputRef(BaseModel):
     name: str
@@ -38,17 +39,34 @@ class TemplateOutputsPathsRef(BaseModel):
     outputs: List[TemplateOutputRef]
 
 class TemplateOutputsRef(BaseModel):
-    parameters: List[TemplateOutputRef]
+    parameters: List[TemplateOutputRef] = Field(default=[])
 
 class TemplateContainerRef(BaseModel):
     name: str
     command: List[str]
     args: str
 
+class VolumeMountRef(BaseModel):
+    name: str
+    mount_path: str
+    read_only: bool = True
+
+class TemplateSidecarRef(BaseModel):
+    image: str
+    name: str
+    env: List[EnvironmentRef] = Field(default=[])
+    volume_mounts: List[VolumeMountRef] = Field(default=[])
+
+class VolumeRef(BaseModel):
+    name: str
+    empty_dir: bool = True
+
 class TemplateRef(BaseModel):
     name: str
     container: TemplateContainerRef
-    outputs: TemplateOutputsRef
+    outputs: TemplateOutputsRef = Field(default=TemplateOutputsRef())
+    sidecars: List[TemplateSidecarRef] = Field(default=[])
+    volumes: List[VolumeRef] = Field(default=[])
 
 class TemplateConfig(BaseModel):
 

@@ -10,43 +10,8 @@ spec:
       plugin: argo-kedro 
   entrypoint: "pipeline"
   templates:
-  {% for tmpl in template.templates %}
-  - name: {{ tmpl.name }}
-    metadata:
-      labels:
-        app: argo-kedro
-    container:
-      image: {{ image }}
-      imagePullPolicy: Always
-      env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-      {% for env in template.environment %}
-        - name: {{ env.name }}
-          {% if env.secret_ref is defined and env.secret_ref %}
-          valueFrom:
-            secretKeyRef:
-              name: {{ env.secret_ref.name }}
-              key: {{ env.secret_ref.key }}
-          {% elif env.value is defined and env.value %}
-          value: {{ env.value }}
-          {% endif %}
-      {% endfor %}
-      command: {{ tmpl.container.command }}
-      args:
-      - |-
-{{ tmpl.container.args | indent(10, true) }}
-    outputs:
-      parameters:
-        {% for param in tmpl.outputs.parameters %}
-        - name: {{ param.name }}
-          valueFrom:
-            path: {{ param.path }}
-        {% endfor %}
-  {% endfor %}
-  - name: kedro
+  - &_kedro_template
+    name: kedro
     metadata:
       labels:
         app: argo-kedro
@@ -111,7 +76,7 @@ spec:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
           {% elif env.value is defined and env.value %}
-          value: {{ env.value }}
+          value: "{{ env.value }}"
           {% endif %}
       {% endfor %}
       {% for init_template in init_templates %}
@@ -128,6 +93,60 @@ spec:
       - "{{ '{{inputs.parameters.kedro_nodes}}' }}"
       - "--env"
       - "{{ environment }}"
+
+  {% for tmpl in template.templates %}
+  {% if tmpl.name in (init_templates | map(attribute='name') | list) %}
+  - name: {{ tmpl.name }}
+    metadata:
+      labels:
+        app: argo-kedro
+    container:
+      image: {{ image }}
+      imagePullPolicy: Always
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      {% for env in template.environment %}
+        - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
+          valueFrom:
+            secretKeyRef:
+              name: {{ env.secret_ref.name }}
+              key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: "{{ env.value }}"
+          {% endif %}
+      {% endfor %}
+      command: {{ tmpl.container.command }}
+      args:
+      - |-
+{{ tmpl.container.args | indent(10, true) }}
+    outputs:
+      parameters:
+        {% for param in tmpl.outputs.parameters %}
+        - name: {{ param.name }}
+          valueFrom:
+            path: {{ param.path }}
+        {% endfor %}
+  {% else %}
+  - <<: *_kedro_template
+    name: {{ tmpl.name }}
+    {% if tmpl.sidecars is defined and tmpl.sidecars %}
+    sidecars:
+    {% for sidecar in tmpl.sidecars %}
+    - name: {{ sidecar.name }}
+      image: {{ sidecar.image }}
+      env:
+      {% for env in sidecar.env %}
+      - name: {{ env.name }}
+        value: "{{ env.value }}"
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+  {% endif %}
+  {% endfor %}
 
   - name: pipeline
     dag:
