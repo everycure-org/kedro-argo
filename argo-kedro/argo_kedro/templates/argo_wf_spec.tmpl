@@ -103,6 +103,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: NUM_CPU
+          value: {% raw %}"{{inputs.parameters.cpu}}"
+          {% endraw %}
+        - name: MEM_LIMIT_GB
+          value: {% raw %}"{{inputs.parameters.mem}}"
+          {% endraw %}
       {% for env in template.environment %}
         - name: {{ env.name }}
           {% if env.secret_ref is defined and env.secret_ref %}
