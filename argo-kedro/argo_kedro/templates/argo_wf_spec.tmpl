@@ -59,7 +59,7 @@ spec:
           volumeMounts:
             - name: scratch
               mountPath: {{ template.emph_storage_mount_path }}
-    container:
+    container: &_kedro_container
       image: {{ image }}
       command: ["kedro"]
       imagePullPolicy: Always
@@ -76,7 +76,7 @@ spec:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
           {% elif env.value is defined and env.value %}
-          value: "{{ env.value }}"
+          value: '{{ env.value | replace("'", "''") }}'
           {% endif %}
       {% endfor %}
       {% for init_template in init_templates %}
@@ -116,7 +116,7 @@ spec:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
           {% elif env.value is defined and env.value %}
-          value: "{{ env.value }}"
+          value: '{{ env.value | replace("'", "''") }}'
           {% endif %}
       {% endfor %}
       command: {{ tmpl.container.command }}
@@ -133,6 +133,12 @@ spec:
   {% else %}
   - <<: *_kedro_template
     name: {{ tmpl.name }}
+    container:
+      <<: *_kedro_container
+      command: {{ tmpl.container.command }}
+      args:
+      - |-
+{{ tmpl.container.args | indent(10, true) }}
     {% if tmpl.sidecars is defined and tmpl.sidecars %}
     sidecars:
     {% for sidecar in tmpl.sidecars %}
@@ -141,7 +147,7 @@ spec:
       env:
       {% for env in sidecar.env %}
       - name: {{ env.name }}
-        value: "{{ env.value }}"
+        value: '{{ env.value | replace("'", "''") }}'
       {% endfor %}
     {% endfor %}
   {% endif %}
