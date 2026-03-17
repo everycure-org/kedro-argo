@@ -47,6 +47,7 @@ class Node(KedroNode):
             "tags": self._tags,
             "confirms": self._confirms,
             "machine_type": self._machine_type,
+            "template": self._template,
         }
         params.update(overwrite_params)
         return Node(**params)
