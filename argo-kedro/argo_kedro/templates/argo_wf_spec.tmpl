@@ -22,6 +22,8 @@ spec:
       - name: mem
       - name: cpu
       - name: num_gpu
+      - name: environment
+        value: {{ environment }}
       - name: emph_storage
       {% for init_template in init_templates %}
         {% for output in init_template.outputs.parameters %}
