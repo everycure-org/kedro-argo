@@ -146,11 +146,26 @@ spec:
     {% for sidecar in tmpl.sidecars %}
     - name: {{ sidecar.name }}
       image: {{ sidecar.image }}
+      volumeMounts:
+      {% for volume_mount in sidecar.volume_mounts %}
+      - name: {{ volume_mount.name }}
+        mountPath: {{ volume_mount.mount_path }}
+        readOnly: {{ volume_mount.read_only }}
+      {% endfor %}
       env:
       {% for env in sidecar.env %}
       - name: {{ env.name }}
         value: '{{ env.value | replace("'", "''") }}'
       {% endfor %}
+    {% endfor %}
+    volumes:
+    {% for volume in tmpl.volumes %}
+    - name: {{ volume.name }}
+      secret:
+        secretName: {{ volume.secret_ref.name }}
+        items:
+        - key: {{ volume.secret_ref.key }}
+          path: {{ volume.secret_ref.path }}
     {% endfor %}
   {% endif %}
   {% endif %}

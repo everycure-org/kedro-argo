@@ -22,6 +22,7 @@ class DeploymentConfig(BaseModel):
 class SecretRef(BaseModel):
     name: str
     key: str
+    path: str | None = None
 
 class EnvironmentRef(BaseModel):
 
@@ -59,7 +60,7 @@ class TemplateSidecarRef(BaseModel):
 
 class VolumeRef(BaseModel):
     name: str
-    empty_dir: bool = True
+    secret_ref: SecretRef
 
 class TemplateRef(BaseModel):
     name: str
