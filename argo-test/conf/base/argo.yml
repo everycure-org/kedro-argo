@@ -170,6 +170,8 @@ template:
               mount_path: /licenses
               read_only: true
           env:
+          - name: NEO4J_gds_enterprise_license__file
+            value: "/licenses/gds-key"
           - name: NEO4J_apoc_export_file_enabled
             value: "true"
           - name: NEO4J_apoc_import_file_enabled
