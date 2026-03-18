@@ -8,7 +8,7 @@
 
 - __Node fusing__: To maximize parallelisation, `argo-kedro` executes each Kedro node in a dedicated Argo task. The plugin exposes a `FusedPipeline` object that can be used to co-locate nodes for execution on a single Argo task.
 
-- __Custom and init templates__: Register custom templates, either to customize the task in which your Kedro nodes run, or tasks to execute before the pipeline runs. The former unlocks spinning up auxiliary services for the duration of you Kedro node, e.g., an emphemeral Neo4j sidecar that can be used to run graph algorihms. The latter allows for bootstrapping external systems, e.g.., creating an MLFlow run for the pipeline.
+- __Custom and init templates__: Register custom templates, either to customize the task in which your Kedro nodes runs, or to execute _before_ the pipeline runs. The former unlocks spinning up auxiliary services for the duration of you Kedro node, e.g., an emphemeral Neo4j sidecar that can be used to run graph algorihms. The latter allows for bootstrapping external systems, e.g.., creating an MLFlow run for the pipeline.
 
 ## Table of contents
 
