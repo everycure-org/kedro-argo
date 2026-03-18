@@ -155,7 +155,6 @@ template:
           done
           echo "Neo4j is ready. Starting main application..."
           kedro run -p "{{inputs.parameters.pipeline}}" -e "{{inputs.parameters.environment}}" -n "{{inputs.parameters.kedro_nodes}}"
-
       volumes:
         - name: gds-key
           secret_ref:
