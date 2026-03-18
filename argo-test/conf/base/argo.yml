@@ -142,16 +142,19 @@ template:
       container:
         name: kedro
         command: ["/bin/sh", "-c"]
+        env:
+          - name: NEO4J_HOST
+            value: "bolt://127.0.0.1:7687"
         args: |
           echo "Setting up temporary directories..."
           mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints
           echo "Waiting for Neo4j to be ready..."
-          until curl -s http://localhost:7474/ready; do
+          until curl -s http://localhost:7474 > /dev/null; do
             echo "Waiting..."
             sleep 5
           done
           echo "Neo4j is ready. Starting main application..."
-          kedro run -p {{ pipeline_name }} -e {% raw %}"{{inputs.parameters.environment}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %}
+          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{inputs.parameters.environment}}" -n "{{inputs.parameters.kedro_nodes}}"
 
       volumes:
         - name: gds-key
@@ -167,8 +170,6 @@ template:
               mount_path: /licenses
               read_only: true
           env:
-          - name: NEO4J_HOST
-            value: "bolt://127.0.0.1:7687"
           - name: NEO4J_apoc_export_file_enabled
             value: "true"
           - name: NEO4J_apoc_import_file_enabled

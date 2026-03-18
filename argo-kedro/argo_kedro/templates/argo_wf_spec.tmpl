@@ -18,6 +18,7 @@ spec:
     inputs:
       parameters:
       - name: pipeline
+        value: {{ pipeline_name }}
       - name: kedro_nodes
       - name: mem
       - name: cpu
@@ -137,6 +138,39 @@ spec:
     name: {{ tmpl.name }}
     container:
       <<: *_kedro_container
+      env:
+          - name: WORKFLOW_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        {% for env in template.environment %}
+          - name: {{ env.name }}
+            {% if env.secret_ref is defined and env.secret_ref %}
+            valueFrom:
+              secretKeyRef:
+                name: {{ env.secret_ref.name }}
+                key: {{ env.secret_ref.key }}
+            {% elif env.value is defined and env.value %}
+            value: '{{ env.value | replace("'", "''") }}'
+            {% endif %}
+        {% endfor %}
+        {% for init_template in init_templates %}
+          {% for output in init_template.outputs.parameters %}
+          - name: {{ output.name | upper }}
+            value: "{{ '{{inputs.parameters.' ~ output.name ~ '}}' }}"
+          {% endfor %}
+        {% endfor %}
+        {% for env in tmpl.container.env %}
+          - name: {{ env.name }}
+            {% if env.secret_ref is defined and env.secret_ref %}
+            valueFrom:
+              secretKeyRef:
+                name: {{ env.secret_ref.name }}
+                key: {{ env.secret_ref.key }}
+            {% elif env.value is defined and env.value %}
+            value: '{{ env.value | replace("'", "''") }}'
+            {% endif %}
+        {% endfor %}
       command: {{ tmpl.container.command }}
       args:
       - |-
@@ -206,8 +240,6 @@ spec:
         {% endif %}
         arguments:
           parameters:
-          - name: pipeline
-            value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.node.name }}
           - name: num_gpu

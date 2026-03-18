@@ -45,6 +45,7 @@ class TemplateOutputsRef(BaseModel):
 class TemplateContainerRef(BaseModel):
     name: str
     command: List[str]
+    env: List[EnvironmentRef] = Field(default=[])
     args: str
 
 class VolumeMountRef(BaseModel):
