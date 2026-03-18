@@ -343,6 +343,8 @@ token: ${oc.env:TOKEN}
 
 ## Custom templates
 
+> This is an experimental capability of the plugin.
+
 The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. A first use-case that comes to mind is customizing the Argo task that executes a specific Kedro node. For instance, to spin up an auxiliary service for the duration of the node.
 
 ```yaml
@@ -391,6 +393,8 @@ def create_pipeline(**kwargs) -> Pipeline:
 
 
 ## Init templates
+
+> This is an experimental capability of the plugin.
 
 ```yaml
 template:
