@@ -29,7 +29,6 @@ class EnvironmentRef(BaseModel):
     name: str
     secret_ref: SecretRef | None = None
     value: str | None = None
-    escape: bool = False
 
 class TemplateOutputRef(BaseModel):
     name: str
