@@ -8,6 +8,8 @@
 
 - __Node fusing__: To maximize parallelisation, `argo-kedro` executes each Kedro node in a dedicated Argo task. The plugin exposes a `FusedPipeline` object that can be used to co-locate nodes for execution on a single Argo task.
 
+- __Custom and init templates__: Register custom templates, either to customize the task in which your Kedro nodes runs, or to execute _before_ the pipeline runs. The former unlocks spinning up auxiliary services for the duration of you Kedro node, e.g., an emphemeral Neo4j sidecar that can be used to run graph algorihms. The latter allows for bootstrapping external systems, e.g.., creating an MLFlow run for the pipeline.
+
 ## Table of contents
 
 - [How do I use argo-kedro?](#how-do-i-install-argo-kedro)
@@ -21,7 +23,8 @@
   - [GPU support](#gpu-support)
   - [Fusing nodes for execution](#fusing-nodes-for-execution)
   - [Using cluster Secrets](#using-cluster-secrets)
-  - [Templates and init templates](#templates-and-init-templates)
+  - [Custom templates](#custom-templates)
+  - [Init templates](#init-templates)
 - [Known issues](#known-issues)
 - [Common errors](#common-errors)
 
@@ -335,16 +338,67 @@ This ensures that the pods running the workflow nodes have access to the secret,
 ```yml
 # base/globals.yml
 
-openai_token: ${oc.env:TOKEN}
+token: ${oc.env:TOKEN}
 ```
 
-## Templates and init templates
+## Custom templates
 
-The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. Cluster secrets, as described above, are also available on these templates during runtime.
+> This is an experimental capability of the plugin.
 
-For instance:
+The plugin allows for customizing the workflow manifest through the `templates` section in the `argo.yml` file. A first use-case that comes to mind is customizing the Argo task that executes a specific Kedro node. For instance, to spin up an auxiliary service for the duration of the node.
 
 ```yaml
+# argo.py
+template:
+  templates:
+    - name: neo4j
+      container:
+        name: kedro
+        command: ["/bin/sh", "-c"]
+        env:
+          - name: NEO4J_HOST
+            value: "bolt://127.0.0.1:7687"
+        args: |
+          echo "Setting up temporary directories..."
+          mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints
+          echo "Waiting for Neo4j to be ready..."
+          until curl -s http://localhost:7474 > /dev/null; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Neo4j is ready. Starting main application..."
+          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{inputs.parameters.environment}}" -n "{{inputs.parameters.kedro_nodes}}"
+      sidecars:
+        - name: neo4j
+          image: neo4j:5.21.0-enterprise
+```
+
+```python
+# NOTE: Import from the plugin, this is a drop in replacement!
+from argo_kedro.pipeline import Node
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return Pipeline(
+        [
+            Node(
+                func=run_neo4j_graph_algortim,
+                inputs=["nodes", "edges"],
+                outputs="output",
+                name="run_neo4j_graph_algorithm",
+                template="neo4j"
+            ),
+        ]
+    )
+```
+
+
+## Init templates
+
+> This is an experimental capability of the plugin.
+
+```yaml
+template:
+
   templates:
     - name: init-mlflow-run
       container:
@@ -363,9 +417,11 @@ For instance:
         parameters:
           - name: mlflow_run_id
             path: /tmp/mlflow_run_id
+
+    init_templates: ["init-mlflow-run"]
 ```
 
-Moreover, a template can optionally be listed as an `init_templates`. This has the following effect:
+A template can optionally be listed as an `init_templates`. This has the following effect:
 
 1. The template is ran _before_ the tasks that represent the Kedro pipeline
 2. All template outputs are passed to the tasks of the pipeline, and mounted as environment variables.

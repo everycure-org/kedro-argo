@@ -22,6 +22,7 @@ class DeploymentConfig(BaseModel):
 class SecretRef(BaseModel):
     name: str
     key: str
+    path: str | None = None
 
 class EnvironmentRef(BaseModel):
 
@@ -38,17 +39,35 @@ class TemplateOutputsPathsRef(BaseModel):
     outputs: List[TemplateOutputRef]
 
 class TemplateOutputsRef(BaseModel):
-    parameters: List[TemplateOutputRef]
+    parameters: List[TemplateOutputRef] = Field(default=[])
 
 class TemplateContainerRef(BaseModel):
     name: str
     command: List[str]
+    env: List[EnvironmentRef] = Field(default=[])
     args: str
+
+class VolumeMountRef(BaseModel):
+    name: str
+    mount_path: str
+    read_only: bool = True
+
+class TemplateSidecarRef(BaseModel):
+    image: str
+    name: str
+    env: List[EnvironmentRef] = Field(default=[])
+    volume_mounts: List[VolumeMountRef] = Field(default=[])
+
+class VolumeRef(BaseModel):
+    name: str
+    secret_ref: SecretRef
 
 class TemplateRef(BaseModel):
     name: str
     container: TemplateContainerRef
-    outputs: TemplateOutputsRef
+    outputs: TemplateOutputsRef = Field(default=TemplateOutputsRef())
+    sidecars: List[TemplateSidecarRef] = Field(default=[])
+    volumes: List[VolumeRef] = Field(default=[])
 
 class TemplateConfig(BaseModel):
 
