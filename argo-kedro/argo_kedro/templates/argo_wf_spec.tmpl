@@ -10,7 +10,101 @@ spec:
       plugin: argo-kedro 
   entrypoint: "pipeline"
   templates:
+  - &_kedro_template
+    name: kedro
+    metadata:
+      labels:
+        app: argo-kedro
+    inputs:
+      parameters:
+      - name: pipeline
+        value: {{ pipeline_name }}
+      - name: kedro_nodes
+      - name: mem
+      - name: cpu
+      - name: num_gpu
+      - name: environment
+        value: {{ environment }}
+      - name: emph_storage
+      {% for init_template in init_templates %}
+        {% for output in init_template.outputs.parameters %}
+      - name: {{ output.name }}
+        {% endfor %}
+      {% endfor %}
+    podSpecPatch: |
+      volumes:
+          - name: scratch
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: {% raw %}"{{inputs.parameters.emph_storage}}Gi"
+                      {% endraw %}
+      containers:
+        - name: main
+          resources:
+            requests:
+              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
+              {% endraw %}
+            limits:
+              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
+              {% endraw %}
+              cpu: {% raw %} "{{inputs.parameters.cpu}}"
+              {% endraw %}
+              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
+              {% endraw %}
+          volumeMounts:
+            - name: scratch
+              mountPath: {{ template.emph_storage_mount_path }}
+    container: &_kedro_container
+      image: {{ image }}
+      command: ["kedro"]
+      imagePullPolicy: Always
+      env:
+        - name: WORKFLOW_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        - name: NUM_CPU
+          value: {% raw %}"{{inputs.parameters.cpu}}"
+          {% endraw %}
+        - name: MEM_LIMIT_GB
+          value: {% raw %}"{{inputs.parameters.mem}}"
+          {% endraw %}
+      {% for env in template.environment %}
+        - name: {{ env.name }}
+          {% if env.secret_ref is defined and env.secret_ref %}
+          valueFrom:
+            secretKeyRef:
+              name: {{ env.secret_ref.name }}
+              key: {{ env.secret_ref.key }}
+          {% elif env.value is defined and env.value %}
+          value: '{{ env.value | replace("'", "''") }}'
+          {% endif %}
+      {% endfor %}
+      {% for init_template in init_templates %}
+        {% for output in init_template.outputs.parameters %}
+        - name: {{ output.name | upper }}
+          value: "{{ '{{inputs.parameters.' ~ output.name ~ '}}' }}"
+        {% endfor %}
+      {% endfor %}
+      args:
+      - "run"
+      - "--pipeline"
+      - "{{ '{{inputs.parameters.pipeline}}' }}"
+      - "--nodes"
+      - "{{ '{{inputs.parameters.kedro_nodes}}' }}"
+      - "--env"
+      - "{{ environment }}"
+
   {% for tmpl in template.templates %}
+  {% if tmpl.name in (init_templates | map(attribute='name') | list) %}
   - name: {{ tmpl.name }}
     metadata:
       labels:
@@ -31,7 +125,7 @@ spec:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
           {% elif env.value is defined and env.value %}
-          value: {{ env.value }}
+          value: '{{ env.value | replace("'", "''") }}'
           {% endif %}
       {% endfor %}
       command: {{ tmpl.container.command }}
@@ -45,64 +139,61 @@ spec:
           valueFrom:
             path: {{ param.path }}
         {% endfor %}
-  {% endfor %}
-  - name: kedro
-    metadata:
-      labels:
-        app: argo-kedro
-    inputs:
-      parameters:
-      - name: pipeline
-      - name: kedro_nodes
-      - name: mem
-      - name: cpu
-      - name: num_gpu
-      - name: emph_storage
-      {% for init_template in init_templates %}
-        {% for output in init_template.outputs.parameters %}
-      - name: {{ output.name }}
-        {% endfor %}
-      {% endfor %}
-    podSpecPatch: |
-      volumes:
-          - name: scratch
-            ephemeral:
-              volumeClaimTemplate:
-                spec:
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: {% raw %}"{{inputs.parameters.emph_storage}}Gi"
-      containers:
-        - name: main
-          resources:
-            requests:
-              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
-              {% endraw %}
-            limits:
-              memory: {% raw %} "{{inputs.parameters.mem}}Gi"
-              {% endraw %}
-              cpu: {% raw %} "{{inputs.parameters.cpu}}"
-              {% endraw %}
-              nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpu}}"
-              {% endraw %}
-          volumeMounts:
-            - name: scratch
-              mountPath: {{ emph_storage_mount_path }}
+  {% else %}
+  - <<: *_kedro_template
+    name: {{ tmpl.name }}
     container:
-      image: {{ image }}
-      command: ["kedro"]
-      imagePullPolicy: Always
+      <<: *_kedro_container
       env:
-        - name: WORKFLOW_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['workflows.argoproj.io/workflow']
-      {% for env in template.environment %}
+          - name: WORKFLOW_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+        {% for env in template.environment %}
+          - name: {{ env.name }}
+            {% if env.secret_ref is defined and env.secret_ref %}
+            valueFrom:
+              secretKeyRef:
+                name: {{ env.secret_ref.name }}
+                key: {{ env.secret_ref.key }}
+            {% elif env.value is defined and env.value %}
+            value: '{{ env.value | replace("'", "''") }}'
+            {% endif %}
+        {% endfor %}
+        {% for init_template in init_templates %}
+          {% for output in init_template.outputs.parameters %}
+          - name: {{ output.name | upper }}
+            value: "{{ '{{inputs.parameters.' ~ output.name ~ '}}' }}"
+          {% endfor %}
+        {% endfor %}
+        {% for env in tmpl.container.env %}
+          - name: {{ env.name }}
+            {% if env.secret_ref is defined and env.secret_ref %}
+            valueFrom:
+              secretKeyRef:
+                name: {{ env.secret_ref.name }}
+                key: {{ env.secret_ref.key }}
+            {% elif env.value is defined and env.value %}
+            value: '{{ env.value | replace("'", "''") }}'
+            {% endif %}
+        {% endfor %}
+      command: {{ tmpl.container.command }}
+      args:
+      - |-
+{{ tmpl.container.args | indent(10, true) }}
+    {% if tmpl.sidecars is defined and tmpl.sidecars %}
+    sidecars:
+    {% for sidecar in tmpl.sidecars %}
+    - name: {{ sidecar.name }}
+      image: {{ sidecar.image }}
+      volumeMounts:
+      {% for volume_mount in sidecar.volume_mounts %}
+      - name: {{ volume_mount.name }}
+        mountPath: {{ volume_mount.mount_path }}
+        readOnly: {{ volume_mount.read_only }}
+      {% endfor %}
+      env:
+      {% for env in sidecar.env %}
         - name: {{ env.name }}
           {% if env.secret_ref is defined and env.secret_ref %}
           valueFrom:
@@ -110,23 +201,22 @@ spec:
               name: {{ env.secret_ref.name }}
               key: {{ env.secret_ref.key }}
           {% elif env.value is defined and env.value %}
-          value: {{ env.value }}
+          value: '{{ env.value | replace("'", "''") }}'
           {% endif %}
       {% endfor %}
-      {% for init_template in init_templates %}
-        {% for output in init_template.outputs.parameters %}
-        - name: {{ output.name | upper }}
-          value: "{{ '{{inputs.parameters.' ~ output.name ~ '}}' }}"
-        {% endfor %}
-      {% endfor %}
-      args:
-      - "run"
-      - "--pipeline"
-      - "{{ '{{inputs.parameters.pipeline}}' }}"
-      - "--nodes"
-      - "{{ '{{inputs.parameters.kedro_nodes}}' }}"
-      - "--env"
-      - "{{ environment }}"
+    {% endfor %}
+    volumes:
+    {% for volume in tmpl.volumes %}
+    - name: {{ volume.name }}
+      secret:
+        secretName: {{ volume.secret_ref.name }}
+        items:
+        - key: {{ volume.secret_ref.key }}
+          path: {{ volume.secret_ref.path }}
+    {% endfor %}
+  {% endif %}
+  {% endif %}
+  {% endfor %}
 
   - name: pipeline
     dag:
@@ -156,8 +246,6 @@ spec:
         {% endif %}
         arguments:
           parameters:
-          - name: pipeline
-            value: {{ pipeline_name }}
           - name: kedro_nodes
             value: {{ task.node.name }}
           - name: num_gpu

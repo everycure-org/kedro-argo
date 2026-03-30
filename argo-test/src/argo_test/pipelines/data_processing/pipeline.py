@@ -28,7 +28,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         name="create_model_input_table_node",
                     ),
                 ],
-                name="data_processing_fused"
+                name="data_processing_fused",
+                template="neo4j"
             )
         ]
     )
