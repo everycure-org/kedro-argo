@@ -43,11 +43,18 @@ def fused_pipeline_complex() -> Pipeline:
             FusedPipeline(
                 [
                     KedroNode(
-                        func=lambda x, y: y,
-                        inputs=["raw_data", "data"],
+                        func=lambda x: x,
+                        inputs=["raw_data"],
+                        outputs="features",
+                        tags=["training"],
+                        name="create_features",
+                    ),
+                    KedroNode(
+                        func=lambda x: x,
+                        inputs=["features"],
                         outputs="model",
                         tags=["training"],
-                        name="train_fun",
+                        name="create_model",
                     ),
                     KedroNode(
                         func=lambda x, y: x,
@@ -74,6 +81,19 @@ def fused_pipeline_complex() -> Pipeline:
                 tags=["predictions"],
                 name="create_predictions_report",
             ),
+            FusedPipeline(
+                [
+                    KedroNode(
+                        func=lambda x: x,
+                        inputs=["features"],
+                        outputs="features_report",
+                        tags=["training"],
+                        name="create_features_report",
+                    ),
+                ],
+                name="fused_reporting",
+                machine_type="n1-standard-8",
+            ),
         ]
     )
 
@@ -87,6 +107,9 @@ def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_comple
         {
             "raw_data": MemoryDataset(pd.DataFrame({"raw_data": [1, 2]})),
             "raw_customers": MemoryDataset(pd.DataFrame({"raw_customers": ["a", "b"]})),
+
+            # NOTE: Used within other fused pipelines, should not be removed
+            "features": CSVDataset(filepath=tmp_path / "predictions.csv"),
             
             # NOTE: Used within the fused pipeline, should be removed if use_memory_datasets is True
             "model": CSVDataset(filepath=tmp_path / "model.csv"),
@@ -108,4 +131,5 @@ def test_run_fused_runner(monkeypatch: pytest.MonkeyPatch, fused_pipeline_comple
     expected_predictions = pd.DataFrame({"raw_data": [1, 2]})
     pd.testing.assert_frame_equal(catalog.load("predictions_report"), expected_predictions)
     assert isinstance(catalog._datasets["predictions"], CSVDataset)
+    assert isinstance(catalog._datasets["features"], CSVDataset)
     assert isinstance(catalog._datasets["model"], MemoryDataset if use_memory_datasets else CSVDataset)
