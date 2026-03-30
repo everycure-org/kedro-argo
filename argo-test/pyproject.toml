@@ -40,7 +40,7 @@ argo-test = "argo_test.__main__:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest-cov>=3,<7",
+    "pytest-cov>=3,<8",
     "pytest-mock>=1.7.1, <4.0",
     "pytest~=9.0",
     "ruff~=0.15.5",
