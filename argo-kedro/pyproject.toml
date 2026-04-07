@@ -64,3 +64,6 @@ include = ["argo_kedro*"]
 
 [tool.setuptools.package-data]
 argo_kedro = ["**/*.tmpl", "**/*.yml", "**/*.dockerignore", "**/*.Dockerfile"]
+
+[tool.uv]
+exclude-newer = "1 week"
