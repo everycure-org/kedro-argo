@@ -12,7 +12,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "ipython>=8.10",
+    "ipython>=8.39.0",
     "jupyterlab>=3.0",
     "notebook",
     "kedro[jupyter]~=1.2.0",
