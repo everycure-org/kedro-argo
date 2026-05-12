@@ -43,7 +43,7 @@ dev = [
     "pytest-cov>=3,<8",
     "pytest-mock>=1.7.1, <4.0",
     "pytest~=9.0",
-    "ruff~=0.15.5",
+    "ruff~=0.15.10",
 ]
 
 [tool.setuptools.dynamic.version]
