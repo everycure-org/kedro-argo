@@ -6,7 +6,7 @@ kedro-datasets[pandas-csvdataset, pandas-exceldataset, pandas-parquetdataset, pl
 kedro-viz>=6.7.0
 scikit-learn~=1.7.2
 seaborn~=0.13.2
-jupyter-server>=2.18.0 # not directly required, pinned by Snyk to avoid a vulnerability
+jupyter-server>=2.18.2 # not directly required, pinned by Snyk to avoid a vulnerability
 mistune>=3.2.1 # not directly required, pinned by Snyk to avoid a vulnerability
 nbconvert>=7.17.1 # not directly required, pinned by Snyk to avoid a vulnerability
 strawberry-graphql>=0.312.3 # not directly required, pinned by Snyk to avoid a vulnerability
