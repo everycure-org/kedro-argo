@@ -12,7 +12,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "ipython>=8.10",
+    "ipython>=8.39.0",
     "jupyterlab>=4.5.7",
     "notebook",
     "kedro[jupyter]~=1.2.0",
@@ -41,7 +41,7 @@ argo-test = "argo_test.__main__:main"
 [project.optional-dependencies]
 dev = [
     "pytest-cov>=3,<8",
-    "pytest-mock>=1.7.1, <4.0",
+    "pytest-mock>=3.15.1, <4.0",
     "pytest~=9.0",
     "ruff~=0.15.10",
 ]
