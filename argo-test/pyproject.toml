@@ -25,7 +25,7 @@ dependencies = [
     "gcsfs",
     "fsspec",
     "pandas>=2.3.3",
-    "proto-plus==1.24.0.dev1",
+    "proto-plus==1.27.2",
     "kedro-mlflow>=2.0.2",
     "mlflow>=3.10.1",
 ]
@@ -40,10 +40,10 @@ argo-test = "argo_test.__main__:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest-cov>=3,<7",
+    "pytest-cov>=3,<8",
     "pytest-mock>=1.7.1, <4.0",
-    "pytest~=7.2",
-    "ruff~=0.15.5",
+    "pytest~=9.0",
+    "ruff~=0.15.10",
 ]
 
 [tool.setuptools.dynamic.version]
