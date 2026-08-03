@@ -25,7 +25,7 @@ dependencies = [
     "gcsfs",
     "fsspec",
     "pandas>=2.3.3",
-    "proto-plus==1.27.2",
+    "proto-plus==1.28.0",
     "kedro-mlflow>=2.0.2",
     "mlflow>=3.10.1",
 ]
